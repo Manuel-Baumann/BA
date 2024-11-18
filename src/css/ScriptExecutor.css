@@ -1,0 +1,312 @@
+.container {
+  padding: 20px;
+  font-family: "Arial", sans-serif;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.explanation {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.columns-container {
+  display: flex;
+  justify-content: space-around;
+  gap: 20px;
+}
+
+.column {
+  width: 45%;
+}
+
+.column-header {
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #343a40;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+}
+
+.dropdown-container {
+  margin-bottom: 20px;
+}
+
+.slider-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.slider-container input[type="range"] {
+  width: 80%;
+}
+
+.slider-container label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #343a40;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.pre {
+  padding: 15px;
+  background-color: #e9ecef;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #495057;
+}
+
+.execute-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.execute-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.execute-button:not(:disabled):hover {
+  background-color: #0056b3;
+}
+
+.dropdown-explanation {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 5px;
+}
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #007bff;
+  margin-left: 5px;
+  position: relative;
+}
+.tooltip-text {
+  visibility: hidden;
+  width: 180px;
+  background-color: #333;
+  color: #fff;
+  text-align: left;
+  border-radius: 4px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  top: 120%; /* Position below the icon */
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 12px;
+}
+
+.info-icon:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.dropdown-label {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.compare-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.compare-button:hover {
+  background-color: #218838;
+}
+
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-table td {
+  padding: 10px;
+  border: none; /* Remove borders for a seamless look */
+}
+
+.pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Container for the entire component */
+.container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* Style for the RadioButton groups spanning both columns */
+.radio-group-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.radio-group {
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+
+.radio-group h3 {
+  margin-bottom: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.radio-group label {
+  display: block;
+  font-size: 14px;
+  margin: 5px 0;
+  cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+  margin-right: 8px;
+}
+
+/* Style for the two columns */
+.columns-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.column {
+  width: 48%;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.column h2 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+}
+
+.column label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.column input[type="radio"] {
+  margin-right: 8px;
+}
+
+/* Style for the Show More Lines button */
+.column button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.column button:hover {
+  background-color: #0056b3;
+}
+
+/* Style for Output fields */
+.column pre {
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #495057;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Style for Compare Outputs button */
+.compare-button {
+  display: block;
+  margin: 20px auto;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.compare-button:hover {
+  background-color: #218838;
+}
+
+/* Style for the Comparison Output field */
+.compare-output {
+  background-color: #f1f3f5;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 6px;
+  border-top: 2px solid #ddd;
+}
+
+.compare-output h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.compare-output pre {
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #495057;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

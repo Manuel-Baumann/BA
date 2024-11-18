@@ -1,0 +1,373 @@
+import React, { useState } from 'react';
+import axios from 'axios';
+import Slider from 'rc-slider';
+import { IcicleWithHover } from './Graph';
+import 'rc-slider/assets/index.css';
+import '../css/ScriptExecutor.css';
+import { /*buildHierarchy,*/ buildIcicleHierarchy } from './helperFunctions';
+
+// New data structure for dynamic radio button groups
+// values: [options1, options2, ...]
+const radioGroupData = [
+    {
+        groupName: "Select the category of students",
+        options: ['All students', 'Only students who graduated at RWTH'],
+        info: "Only students who graduated at RWTH: Filtering for students who have passed all mandatory courses at RWTH, including the bachelor`s thesis."
+    },
+    /*{
+        groupName: "Choose data filtering options",
+        options: ['Prefiltered (no 0 credits and passed)', 'All data'],
+        info: "Prefiltered (no 0 credits and passed): For some courses the students got 0 credits and passed, those are left out."
+    },*/
+    {
+        groupName: "Select the type of academic data",
+        options: ['Courses', 'Grades'],
+        info: "Choose wether to run the algorithm on the courses names or the grades that the students got."
+    },
+    {
+        groupName: "Select the time period",
+        options: ['Year', 'Semester'],
+        info: "Choose wether to run the algorithm on a semester`s basis or a year`s basis.",
+    },
+    {
+        groupName: "Select the set of courses",
+        options: ['All courses', 'Only not passed courses'],
+        info: "Choose whether to include all courses or only failed courses."
+    },
+    {
+        groupName: "Select the analysis method",
+        options: ['Frequent Itemsets', 'Association Rules', 'Sequence Patterns'],
+        info: "Choose one of the three different types of information to be shown."
+    },
+];
+// columnValues: [options1, options2, ...]
+const radioGroupColumnData = [
+    {
+        options: ['All', 'm', 'w', 'd'],
+        info: '',
+        header: 'Gender'
+    },
+    {
+        options: ['All', 'German'],
+        info: '',
+        header: 'Nationality'
+    },
+    {
+        options: ['RWTH University'],
+        info: '',
+        header: 'University'
+    },
+    {
+        options: ['Computer Science'],
+        info: '',
+        header: 'Degree'
+    }
+]
+
+
+const infoMinMax = "Students will be sorted by their mean grade. Only those within the range (in %) will be considered."
+
+const ScriptExecutor = () => {
+    const [output1, setOutput1] = useState('');
+    const [output2, setOutput2] = useState('');
+    const [extraOutput1, setExtraOutput1] = useState('');  // Extra output for column 1
+    const [extraOutput2, setExtraOutput2] = useState('');  // Extra output for column 2
+    const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
+    const [data1, setData1] = useState({});//buildIcicleHierarchy(["A=>Y=>C#SUP:0.5", "A=>Y#SUP:0.1"])
+    const [data2, setData2] = useState({});
+    const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
+    const [rangeValues, setRangeValues] = useState({
+        column1: [0, 100],  // Initial min and max values for Column 1
+        column2: [0, 100]   // Initial min and max values for Column 2
+    });
+    // Updated options for six dropdowns
+    const [selectedValues, setSelectedValues] = useState(
+        radioGroupData.map(group => group.options[0])  // Set the first option as the default
+    );
+    const [selectedColumnValues, setSelectedColumnValues] = useState({
+        column1: radioGroupColumnData.map(group => group.options[0]),  // Set the first option for each group
+        column2: radioGroupColumnData.map(group => group.options[0])   // Set the first option for each group
+    });
+
+    const handleGroupSelection = (groupIndex, value) => {
+        const updatedSelections = [...selectedValues];
+        updatedSelections[groupIndex] = value;
+        setSelectedValues(updatedSelections);
+    };
+
+    // Handle the range slider change for both columns
+    const handleRangeChange = (values, columnIndex) => {
+        const newRangeValues = { ...rangeValues };
+        newRangeValues[`column${columnIndex}`] = values;
+        setRangeValues(newRangeValues);
+    };
+
+    const executeScript = async (columnIndex) => {
+        const values = selectedValues
+        const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
+        const range = rangeValues[`column${columnIndex}`];
+
+        try {
+            // Execute the python script
+            const response = await axios.post('http://localhost:5000/execute', {
+                column: columnIndex,
+                values: values,
+                columnValues: columnValues,
+                sliderMin: range[0],
+                sliderMax: range[1],
+                numberOfOutputLines
+            });
+            let responseLines = response.data.output.split('\n');
+            // Remove automatically generated output by spmf algorithm
+
+            let i = 0;
+            let first = 0;
+            let last = 0;
+            let leaveIn = 0;
+            while (i < responseLines.length && i < 30) {
+                // Remove .jar file filepath and all lines from first ====== to last ======
+                if (responseLines[i].startsWith('=====') && first === 0) {
+                    first = i - 2;
+                }
+                else if (responseLines[i].startsWith('=====') && first !== 0) {
+                    last = i;
+                }
+                // Leave in important information
+                if (responseLines[i].startsWith(' Number of association rules ') || responseLines[i].startsWith(' Pattern count')) {
+                    leaveIn = i;
+                }
+                i++;
+            }
+            if (first !== 0) {
+                // Remove all lines from first to last, but leave in important information and the last ======
+                responseLines = responseLines.slice(0, first).concat(responseLines[leaveIn].trim()).concat(responseLines[leaveIn + 1]).concat(responseLines.slice(last + 1));
+            }
+
+            // Filter POSTPROCESSING information and actual output and remove prefix for postprocessing
+            const mainOutput = responseLines.filter(line => !line.startsWith('"""POSTPROCESSING"""')).join('\n');
+            const preprocOutput = responseLines.filter(line => line.startsWith('"""POSTPROCESSING"""')).map(line => line.slice(20)).join('\n\n');
+
+            // Set data for Graph
+            //let sunburstData = {}
+            let icicleData = {}
+            if (selectedValues.at(-1) === 'Sequence Patterns') {
+                const index = mainOutput.split('\n').findIndex(line => line.startsWith('==='))
+                // Only get output lines and remove last 'successful timestamp' line
+                const onlyOutputLines = mainOutput.split('\n').slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+
+                // Icicle Burst graph
+                icicleData = buildIcicleHierarchy(onlyOutputLines);
+                console.log(icicleData)
+            } else if (selectedValues.at(-1) === 'Association Rules') {
+                console.log()
+            } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
+                console.log()
+            }
+
+            // Set output in respective column
+            if (columnIndex === 1) {
+                setOutput1(mainOutput);
+                setExtraOutput1(preprocOutput);//POSTPROCESSING
+                setData1(icicleData);
+            } else {
+                setOutput2(mainOutput);
+                setExtraOutput2(preprocOutput); //POSTPROCESSING
+                setData2(icicleData);
+            }
+
+        } catch (error) {
+            if (columnIndex === 1) {
+                setOutput1(`Error: ${error.message}`);
+                setExtraOutput1('');
+            } else {
+                setOutput2(`Error: ${error.message}`);
+                setExtraOutput2('');
+            }
+        }
+    };
+
+    const compareOutputs = () => {
+        const outputLines1 = output1.split('\n');
+        const outputLines2 = output2.split('\n');
+
+        // Filter lines that are only in column 1 or column 2
+        const uniqueToColumn1 = outputLines1.filter(line => !outputLines2.includes(line));
+        const uniqueToColumn2 = outputLines2.filter(line => !outputLines1.includes(line));
+
+        setOutput1(uniqueToColumn1.join('\n'));
+        setOutput2(uniqueToColumn2.join('\n'));
+    };
+
+
+    return (
+        <div className="container">
+
+            {/* Dynamic Grouping of RadioButtons */}
+            <div className="radio-group-container">
+                {radioGroupData.map((group, groupIndex) => (
+                    <div key={groupIndex} className="radio-group">
+                        <span className="info-icon">ℹ️
+                            <span className="tooltip-text">{group.info}</span>
+                        </span><h3>{group.groupName}</h3>
+                        {group.options.map((option, optionIndex) => (
+                            <label key={optionIndex}>
+                                <input
+                                    type="radio"
+                                    name={`group-${groupIndex}`}
+                                    value={option}
+                                    checked={selectedValues[groupIndex] === option}
+                                    onChange={() => handleGroupSelection(groupIndex, option)}
+                                />
+                                {option}
+                            </label>
+                        ))}
+
+                    </div>
+
+                ))}
+                {/* Slider for Number of ouput lines */}
+                <div className="slider-container">
+                    <span className="info-icon">ℹ️
+                        <span className="tooltip-text">Amount of lines of output to be vizualized (200 -> All produced output)</span>
+                    </span>
+                    <label>Output size: {numberOfOutputLines}</label>
+                    <Slider
+                        range
+                        min={0}
+                        max={200}
+                        value={numberOfOutputLines}
+                        onChange={(value) => setNumberOfOutputLines(value)}
+                    />
+                </div>
+
+            </div>
+
+            <div className="columns-container">
+                <div className="column">
+                    <h2>Cohort 1</h2>
+                    {radioGroupColumnData.map((group, groupIndex) => (
+                        <div key={groupIndex} className="radio-group">
+                            <h3>{group.header}</h3>
+                            {group.options.map((option, optionIndex) => (
+                                <label key={optionIndex}>
+                                    <input
+                                        type="radio"
+                                        name={`column1-group-${groupIndex}`}
+                                        value={option}
+                                        checked={selectedColumnValues.column1[groupIndex] === option}
+                                        onChange={() => {
+                                            const updatedValues = [...selectedColumnValues.column1];
+                                            updatedValues[groupIndex] = option;
+                                            setSelectedColumnValues({ ...selectedColumnValues, column1: updatedValues });
+                                        }}
+                                    />
+                                    {option}
+                                </label>
+                            ))}
+                        </div>
+                    ))}
+
+                    {/* Slider for Column 1 */}
+                    <div className="slider-container">
+                        <span className="info-icon">ℹ️
+                            <span className="tooltip-text">{infoMinMax}</span>
+                        </span>
+                        <label>Min: {rangeValues.column1[0]} | Max: {rangeValues.column1[1]}</label>
+                        <Slider
+                            range
+                            min={0}
+                            max={100}
+                            value={rangeValues.column1}
+                            onChange={(values) => handleRangeChange(values, 1)}
+                        />
+                    </div>
+                    <button className="execute-button" onClick={() => executeScript(1)}>
+                        Execute Algorithm
+                    </button>
+                    <div>
+                        <h3>Postprocessing:</h3>
+                        <pre className="pre">{extraOutput1}</pre>  {/* Extra output for column 1 */}
+                        {/* Graph */}
+                        <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                            <IcicleWithHover data={data1}
+                            /></div>
+                        <h3>Output:</h3>
+                        <pre>{output1}</pre>
+                    </div>
+                    <button onClick={() => setOutput1(output1 + '\nNew line')}>Show more lines</button>
+
+                </div>
+
+                <div className="column">
+                    <h2>Cohort 2</h2>
+                    {radioGroupColumnData.map((group, groupIndex) => (
+                        <div key={groupIndex} className="radio-group">
+                            <h3>{group.header}</h3>
+                            {group.options.map((option, optionIndex) => (
+                                <label key={optionIndex}>
+                                    <input
+                                        type="radio"
+                                        name={`column2-group-${groupIndex}`}
+                                        value={option}
+                                        checked={selectedColumnValues.column2[groupIndex] === option}
+                                        onChange={() => {
+                                            const updatedValues = [...selectedColumnValues.column2];
+                                            updatedValues[groupIndex] = option;
+                                            setSelectedColumnValues({ ...selectedColumnValues, column2: updatedValues });
+                                        }}
+                                    />
+                                    {option}
+                                </label>
+                            ))}
+                        </div>
+                    ))}
+
+                    {/* Slider for Column 2 */}
+                    <div className="slider-container">
+                        <span className="info-icon">ℹ️
+                            <span className="tooltip-text">{infoMinMax}</span>
+                        </span>
+                        <label>Min: {rangeValues.column2[0]} | Max: {rangeValues.column2[1]}</label>
+                        <Slider
+                            range
+                            min={0}
+                            max={100}
+                            value={rangeValues.column2}
+                            onChange={(values) => handleRangeChange(values, 2)}
+                        />
+                    </div>
+
+                    <button className="execute-button" onClick={() => executeScript(2)}>
+                        Execute Algorithm
+                    </button>
+                    <div>
+                        <h3>Postprocessing:</h3>
+                        <pre className="pre">{extraOutput2}</pre>  {/* Extra output for column 2 */}
+                        <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                            <IcicleWithHover data={data2}
+                            /></div>
+                        <h3>Output:</h3>
+                        <pre>{output2}</pre>
+                    </div>
+                    <button onClick={() => setOutput2(output2 + '\nNew line')}>Show more lines</button>
+                </div>
+            </div>
+
+            <button className="compare-button" onClick={compareOutputs}>Show only lines that don't exist in the other column</button>
+
+            {/* Comparison Output Field */}
+            {compareOutputVisible && (
+                <>
+                    <hr />
+                    <div className="compare-output">
+                        <h3>Compare Outputs</h3>
+                        <pre>{extraOutput1}</pre>
+                        <pre>{extraOutput2}</pre>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
+export default ScriptExecutor;
