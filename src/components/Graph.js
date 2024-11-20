@@ -126,9 +126,12 @@ export const IcicleWithHover = ({ data }) => {
 
         // Set up root hierarchy with D3 partition layout
         const root = d3
-            .hierarchy(data)
+            .hierarchy(data, (d) => d.children)
             .sum((d) => d.size)
-            .sort((a, b) => b.value - a.value);
+            .each((node) => {
+                node.id = (node.parent ? `${node.parent.id}->` : '') + node.data.name;
+            });
+
 
         const partition = d3.partition().size([width, height]);
         partition(root);
@@ -150,7 +153,13 @@ export const IcicleWithHover = ({ data }) => {
             .style('cursor', 'pointer')
             .on('mouseover', function (event, d) {
                 setHoveredNode(d);
-                setBreadcrumbPath(d.ancestors().reverse().slice(1));
+                try {
+                    setBreadcrumbPath(d.ancestors().reverse().slice(1));
+                } catch (error) {
+                    console.error('Error updating breadcrumbs:', error);
+                    setBreadcrumbPath([]); // Clear breadcrumbs in case of error
+                }
+
                 highlightPath(d);
                 d3.select(tooltipRef.current)
                     .style('opacity', 1)
@@ -215,11 +224,12 @@ export const IcicleWithHover = ({ data }) => {
                 }}
             >
                 {breadcrumbPath.map((node, i) => (
-                    <React.Fragment key={node.data.name}>
+                    <React.Fragment key={node.id || `${node.data.name}-${i}`}>
                         {i > 0 && <span>➔</span>}
                         <span>{node.data.name}</span>
                     </React.Fragment>
-                ))}
+                ))
+                }
             </div>
 
             {/* Icicle chart */}

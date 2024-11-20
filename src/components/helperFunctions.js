@@ -73,13 +73,13 @@ function addToTreeIcicle(tree, steps, support) {
 
         // If the step doesn't exist yet at this level, create it
         if (!childNode) {
-            childNode = { name: step, children: [] };
+            childNode = { name: step, children: [], size: index === steps.length - 1 ? support : 0 };
             currentNode.children.push(childNode);
-        }
-
-        // If it's the last step in the sequence, assign the support
-        if (index === steps.length - 1) {
-            childNode.size = support;
+        } else {
+            while (currentNode.children.some(child => child.name === step && child !== childNode)) {
+                step += '\u200Basef';
+            }
+            childNode.name = step;
         }
 
         // Move to the current child node for the next iteration
