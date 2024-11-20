@@ -119,10 +119,18 @@ export const buildIcicleHierarchy = (patterns) => {
 
     const root = { name: "", children: [] };
     // Process each pattern, parse it, and add it to the tree
-    patterns.forEach(patternStr => {
-        const { steps, support } = parsePatternIcicle(patternStr);
+    let parsedData = patterns.map(item => {
+        const [patternStr, support] = item.split("#SUP:");
+        const steps = patternStr.split("=>").map(step => step.trim());
+        return { steps, support: parseFloat(support.trim()) };
+    });
+    parsedData.sort((a, b) => a.steps.length - b.steps.length); // Sort by step count
+
+    // Add sorted patterns to the tree
+    parsedData.forEach(({ steps, support }) => {
         addToTreeIcicle(root, steps, support);
     });
+
     adjustSupportRecursively(root);
     return root
 }
