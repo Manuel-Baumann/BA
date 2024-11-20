@@ -37,7 +37,9 @@ try:
         True,
         True,
     )
+    insights = 0
     sets_rules_patterns = 0
+
     if values[0] == "Only students who graduated at RWTH":
         bool_all = False
     if values[1] == "Grades":
@@ -46,15 +48,20 @@ try:
         bool_year = False
     if values[3] == "Only not passed courses":
         bool_all_courses = False
-    if values[4] == "Association Rules":
+    if values[4] == "Closed":
+        insights = 1
+    if values[4] == "Maximal":
+        insights = 2
+    if values[-1] == "Association Rules":
         sets_rules_patterns = 1
-    if values[4] == "Sequence Patterns":
+    if values[-1] == "Sequence Patterns":
         sets_rules_patterns = 2
     execute_script_func(
         bool_all,
         bool_courses,
         bool_year,
         bool_all_courses,
+        insights,
         sets_rules_patterns,
         int(slider_min),
         int(slider_max),

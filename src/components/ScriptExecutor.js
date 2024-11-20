@@ -34,6 +34,7 @@ const radioGroupData = [
         options: ['All courses', 'Only not passed courses'],
         info: "Choose whether to include all courses or only failed courses."
     },
+    { groupName: "Insights", options: ['Normal', 'Closed', 'Maximal'], info: "Choose which kind of ouput you want" },
     {
         groupName: "Select the analysis method",
         options: ['Frequent Itemsets', 'Association Rules', 'Sequence Patterns'],
@@ -73,7 +74,7 @@ const ScriptExecutor = () => {
     const [extraOutput1, setExtraOutput1] = useState('');  // Extra output for column 1
     const [extraOutput2, setExtraOutput2] = useState('');  // Extra output for column 2
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
-    const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
+    const [data1, setData1] = useState(buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"]));//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({
@@ -150,10 +151,18 @@ const ScriptExecutor = () => {
             // Set data for Graph
             //let sunburstData = {}
             let icicleData = {}
+
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 const index = mainOutput.split('\n').findIndex(line => line.startsWith('==='))
                 // Only get output lines and remove last 'successful timestamp' line
-                const onlyOutputLines = mainOutput.split('\n').slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+                let onlyOutputLines = mainOutput.split('\n').slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+                console.log(onlyOutputLines)
+
+                if (selectedValues.at(-2) === "Closed" || selectedValues.at(-2) === "Maximal") {
+                    onlyOutputLines = onlyOutputLines.slice(6)
+                }
+
+                console.log(onlyOutputLines)
 
                 // Icicle Burst graph
                 icicleData = buildIcicleHierarchy(onlyOutputLines);
@@ -294,7 +303,6 @@ const ScriptExecutor = () => {
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
                     </div>
-                    <button onClick={() => setOutput1(output1 + '\nNew line')}>Show more lines</button>
 
                 </div>
 
@@ -349,7 +357,6 @@ const ScriptExecutor = () => {
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
                     </div>
-                    <button onClick={() => setOutput2(output2 + '\nNew line')}>Show more lines</button>
                 </div>
             </div>
 

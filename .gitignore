@@ -22,5 +22,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-./react-app/backend/Results
-./react-app/backend/number_name.txt
+/react-app/backend/Results
+/react-app/backend/number_name.txt

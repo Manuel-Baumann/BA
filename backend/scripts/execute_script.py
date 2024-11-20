@@ -82,6 +82,7 @@ mandatory_courses_dict = {
 bins_bool = True
 work_renamed = "./csv/work_renamed.csv"
 not_passed_prefix = "(Not passed) "
+seq_patt_spmf_algo_name = ""
 
 
 def execute_script_func(
@@ -89,6 +90,7 @@ def execute_script_func(
     bool_courses,
     bool_year,
     bool_all_courses,
+    insights,
     sets_rules_patterns,
     slider_min,
     slider_max,
@@ -98,10 +100,21 @@ def execute_script_func(
     if slider_min >= slider_max:
         print("Error: Check slider values, min:", slider_min, ">= max:", slider_max)
         return
+
+    #################### Handle global vars based on input ####################
     global TRUNCATE_OUTPUT
     TRUNCATE_OUTPUT = number_of_output_lines
     if TRUNCATE_OUTPUT == 200:
         TRUNCATE_OUTPUT = 30000
+
+    global seq_patt_spmf_algo_name
+    if insights == 0:
+        seq_patt_spmf_algo_name = "PrefixSpan"
+    elif insights == 1:
+        seq_patt_spmf_algo_name = "ClaSP"
+    elif insights == 2:
+        seq_patt_spmf_algo_name = "MaxSP"
+    ###########################################################################
     # Doesnt work for slidermin = 0.75, slidermax = 1
     min_sup = 0.8
     if not bool_year:
@@ -532,11 +545,16 @@ def decode_prefix_span_output(input_path, readable_output_path):
 
 def run_prefix_span(input, output, min_support, max_len, readable_output_path):
     # arguments: minsup, max sequence length
+    algo_args = []
+    if seq_patt_spmf_algo_name == "PrefixSpan":
+        algo_args = [min_support, max_len]
+    else:
+        algo_args = [min_support]
     spmf = Spmf(
-        "PrefixSpan",
+        seq_patt_spmf_algo_name,
         input_filename=input,
         output_filename=output,
-        arguments=[min_support, max_len],
+        arguments=algo_args,
         spmf_bin_location_dir="../../Data/spmf/",
     )
     spmf.run()
