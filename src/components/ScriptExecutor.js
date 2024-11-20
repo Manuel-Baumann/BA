@@ -73,7 +73,7 @@ const ScriptExecutor = () => {
     const [extraOutput1, setExtraOutput1] = useState('');  // Extra output for column 1
     const [extraOutput2, setExtraOutput2] = useState('');  // Extra output for column 2
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
-    const [data1, setData1] = useState({});//buildIcicleHierarchy(["A=>Y=>C#SUP:0.5", "A=>Y#SUP:0.1"])
+    const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({

@@ -67,7 +67,7 @@ function addToTreeIcicle(tree, steps, support) {
     let currentNode = tree;
 
     // For each step in the sequence
-    steps.forEach(step => {
+    steps.forEach((step, index) => {
         // Find if this step already exists as a child node
         let childNode = currentNode.children.find(child => child.name === step);
 
@@ -77,23 +77,52 @@ function addToTreeIcicle(tree, steps, support) {
             currentNode.children.push(childNode);
         }
 
+        // If it's the last step in the sequence, assign the support
+        if (index === steps.length - 1) {
+            childNode.size = support;
+        }
+
         // Move to the current child node for the next iteration
         currentNode = childNode;
     });
-
-    // Attach the support value to the final node in the sequence path
-    currentNode.size = support;
 }
+
+// Function to adjust the size of parent nodes
+function adjustSupportRecursively(node) {
+    //console.log(node)
+    if (!node.children || node.children.length === 0) {
+        // Leaf node: no children to process
+        //console.log("no children", node.size)
+        node.size = node.size ? parseFloat(node.size.toFixed(4)) : 0;
+        return node.size;
+    }
+    // Calculate the total support of all children
+
+    // Calculate the total child support
+    const childSupportSum = node.children.reduce((sum, child) => {
+        return sum + adjustSupportRecursively(child);
+    }, 0);
+
+    // Subtract the children's support sum from the parent node
+    if (node.size) {
+        node.size = parseFloat((node.size - childSupportSum).toFixed(4));
+    }
+    else {
+        node.size = 0
+    }
+    //console.log("node", node.name, "support", node.size)
+    return parseFloat((node.size + childSupportSum).toFixed(4));
+}
+
 
 export const buildIcicleHierarchy = (patterns) => {
 
     const root = { name: "", children: [] };
-    console.log(patterns)
     // Process each pattern, parse it, and add it to the tree
     patterns.forEach(patternStr => {
         const { steps, support } = parsePatternIcicle(patternStr);
         addToTreeIcicle(root, steps, support);
     });
-
-    return root;
+    adjustSupportRecursively(root);
+    return root
 }
