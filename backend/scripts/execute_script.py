@@ -261,15 +261,15 @@ def execute_script_func(
             "Number of frequent itemsets:",
             frequent_itemset.shape[0],
         )
+        # Print df to output file, so that it can be visualized
+        df_to_file(frequent_itemset, tmp)
         print("OUTPUT: FREQUENT ITEMSETS")
-        print(frequent_itemset.head(TRUNCATE_OUTPUT))
+        print_output(tmp)
 
-        ### Find frequent course/grade combinations within one semester/year
-
+        ### Find frequent course/grade combinations within one semester/year ###
         sem_year = "semester"
         if bool_year:
             sem_year = "year"
-        print("Frequent", str_course_grade, "combinations within one", sem_year + ":")
         student_courses_df = pd.DataFrame(
             work.groupby("semester")[str_course_grade].unique()
         )
@@ -300,8 +300,13 @@ def execute_script_func(
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
             ]
-        print("OUTPUT: FREQUENT ITEMSETS PER SEMESTER")
-        print(frequent_itemset.head(TRUNCATE_OUTPUT))
+
+        # Print df to output file, so that it can be visualized
+        df_to_file(frequent_itemset, tmp)
+        print(
+            f"OUTPUT: FREQUENT {str_course_grade.upper()} combinations within one {sem_year.upper()}"
+        )
+        print_output(tmp)
 
     ################################## End: Frequent Itemsets ##################################
     grade_bool = not bool_courses
@@ -735,3 +740,11 @@ def remove_grade_zero(tmp):
             new_lines.append(" ".join(words) + "\n")
     with open(tmp, "w") as file:
         file.writelines(new_lines)
+
+
+def df_to_file(df, file_path):
+    with open(file_path, "w", newline="", encoding="utf-8") as file:
+        for _, row in df.iterrows():
+            itemset_str = " || ".join(row["itemsets"])
+            support_relative = row["support"]
+            file.write(f"{itemset_str} #SUP:{support_relative}\n")

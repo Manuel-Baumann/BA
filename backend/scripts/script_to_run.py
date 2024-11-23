@@ -56,6 +56,12 @@ try:
         sets_rules_patterns = 1
     if values[-1] == "Sequence Patterns":
         sets_rules_patterns = 2
+
+    # Create the output directory if it doesn't exist
+    directory_path = "Results"
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
     execute_script_func(
         bool_all,
         bool_courses,

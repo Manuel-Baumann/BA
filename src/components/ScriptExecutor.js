@@ -165,14 +165,18 @@ const ScriptExecutor = () => {
             const mainOutputSplitted = mainOutput.split('\n')
             // Only get output lines and remove last 'successful timestamp' line
             const index = mainOutputSplitted.findIndex(line => line.startsWith('OUTPUT:'))
-            const onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+            let onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
 
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchy(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                // Still wrapper to be written
+                const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
+                const secondOutput = onlyOutput.slice(indexSecond + 1)
+                onlyOutput = onlyOutput.slice(0, indexSecond)
+                icicleData = buildIcicleHierarchy(onlyOutput)
+                console.log(secondOutput)
             }
 
             // Set output in respective column
