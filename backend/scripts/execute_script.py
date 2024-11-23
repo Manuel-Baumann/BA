@@ -296,7 +296,7 @@ def execute_script_func(
             ]
         print(frequent_itemset.head(30))
 
-    ################################## End: Sequential Patterns##################################
+    ################################## End: Frequent Itemsets ##################################
     grade_bool = not bool_courses
     global all_distinct_courses
     all_distinct_courses = create_all_distinct_courses_from_df(work, grade_bool)
@@ -349,7 +349,7 @@ def execute_script_func(
         print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
         remove_grade_zero(tmp)
         print_output(tmp)
-
+    ################################## End: Association Rules ##################################
     ################################## Sequential Patterns ##################################
     if sets_rules_patterns == 2:
         min_sup = 0.1

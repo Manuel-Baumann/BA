@@ -22,5 +22,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-/react-app/backend/Results
-/react-app/backend/number_name.txt
+backend/Results
+backend/number_name.txt
+backend/scripts/
+backend/scripts/__pycache__
+.log

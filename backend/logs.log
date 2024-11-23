@@ -616,3 +616,39 @@
 2024-11-13 16:00:42,549:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:185: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
   mean_range = mean_range[
 
+2024-11-20 14:56:37,741:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:186: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 14:57:44,968:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:186: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 14:58:47,211:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:186: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 15:43:46,788:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 15:45:58,713:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 15:48:17,613:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 15:52:47,508:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 15:53:06,517:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 16:02:06,770:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 16:04:41,261:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 16:07:08,021:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+
+2024-11-20 16:07:41,918:WARNING:C:\Users\manue\OneDrive\Dokumente\Studium\Semester 6\BA\react-app\backend\scripts\execute_script.py:198: UserWarning: Boolean Series key will be reindexed to match DataFrame index.
+  mean_range = mean_range[
+

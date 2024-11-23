@@ -168,9 +168,15 @@ const ScriptExecutor = () => {
                 icicleData = buildIcicleHierarchy(onlyOutputLines);
                 console.log(icicleData)
             } else if (selectedValues.at(-1) === 'Association Rules') {
-                console.log()
+
+                console.log(mainOutput)
+                let onlyOutputLines = mainOutput.split('\n').filter(line => line.trim() !== '').slice(5).slice(0, -1);
+                onlyOutputLines = onlyOutputLines.map(str => str.replace(/==>/g, '=>'));
+                console.log(onlyOutputLines)
+
+                icicleData = buildIcicleHierarchy(onlyOutputLines)
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                console.log()
+                console.log(mainOutput)
             }
 
             // Set output in respective column
