@@ -24,6 +24,5 @@ yarn-error.log*
 
 backend/Results
 backend/number_name.txt
-backend/scripts/
 backend/scripts/__pycache__
-.log
+backend/logs.log
