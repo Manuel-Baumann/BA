@@ -97,6 +97,7 @@ def execute_script_func(
     column_values,
     number_of_output_lines,
 ):
+    print("Starting script:", datetime.datetime.now())
     if slider_min >= slider_max:
         print("Error: Check slider values, min:", slider_min, ">= max:", slider_max)
         return
@@ -225,6 +226,7 @@ def execute_script_func(
 
     ################################## Frequent Itemsets ##################################
     if sets_rules_patterns == 0:
+        min_sup = 0.4
         student_courses_df = pd.DataFrame(
             work.groupby("subjectId")[str_course_grade].unique()
         )
@@ -259,7 +261,11 @@ def execute_script_func(
             "Number of frequent itemsets:",
             frequent_itemset.shape[0],
         )
-        print(frequent_itemset.head(30))
+        print("OUTPUT: FREQUENT ITEMSETS")
+        print(frequent_itemset.head(TRUNCATE_OUTPUT))
+
+        ### Find frequent course/grade combinations within one semester/year
+
         sem_year = "semester"
         if bool_year:
             sem_year = "year"
@@ -294,7 +300,8 @@ def execute_script_func(
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
             ]
-        print(frequent_itemset.head(30))
+        print("OUTPUT: FREQUENT ITEMSETS PER SEMESTER")
+        print(frequent_itemset.head(TRUNCATE_OUTPUT))
 
     ################################## End: Frequent Itemsets ##################################
     grade_bool = not bool_courses
@@ -348,6 +355,7 @@ def execute_script_func(
         make_support_relative(tmp, work["subjectId"].nunique())
         print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
         remove_grade_zero(tmp)
+        print("OUTPUT: ASSOCIATION RULES")
         print_output(tmp)
     ################################## End: Association Rules ##################################
     ################################## Sequential Patterns ##################################
@@ -367,6 +375,7 @@ def execute_script_func(
                 '"""POSTPROCESSING"""Sequential Patterns including grade 0.0 were removed.'
             )
             remove_grade_zero(tmp)
+        print("OUTPUT: SEQUENTIAL PATTERNS")
         print_output(tmp)
     print("successful", datetime.datetime.now())
 

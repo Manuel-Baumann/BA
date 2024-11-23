@@ -107,10 +107,10 @@ const ScriptExecutor = () => {
         const values = selectedValues
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
         const range = rangeValues[`column${columnIndex}`];
-
+        let response = ''
         try {
             // Execute the python script
-            const response = await axios.post('http://localhost:5000/execute', {
+            response = await axios.post('http://localhost:5000/execute', {
                 column: columnIndex,
                 values: values,
                 columnValues: columnValues,
@@ -118,6 +118,17 @@ const ScriptExecutor = () => {
                 sliderMax: range[1],
                 numberOfOutputLines
             });
+        } catch (error) {
+            const errorMessage = `Error while executing script: ${error.message}`
+            if (columnIndex === 1) {
+                setOutput1(errorMessage);
+                setExtraOutput1('');
+            } else {
+                setOutput2(errorMessage);
+                setExtraOutput2('');
+            }
+        }
+        try {
             let responseLines = response.data.output.split('\n');
             // Remove automatically generated output by spmf algorithm
 
@@ -151,32 +162,17 @@ const ScriptExecutor = () => {
             // Set data for Graph
             //let sunburstData = {}
             let icicleData = {}
+            const mainOutputSplitted = mainOutput.split('\n')
+            // Only get output lines and remove last 'successful timestamp' line
+            const index = mainOutputSplitted.findIndex(line => line.startsWith('OUTPUT:'))
+            const onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
 
             if (selectedValues.at(-1) === 'Sequence Patterns') {
-                const index = mainOutput.split('\n').findIndex(line => line.startsWith('==='))
-                // Only get output lines and remove last 'successful timestamp' line
-                let onlyOutputLines = mainOutput.split('\n').slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
-                console.log(onlyOutputLines)
-
-                if (selectedValues.at(-2) === "Closed" || selectedValues.at(-2) === "Maximal") {
-                    onlyOutputLines = onlyOutputLines.slice(6)
-                }
-
-                console.log(onlyOutputLines)
-
-                // Icicle Burst graph
-                icicleData = buildIcicleHierarchy(onlyOutputLines);
-                console.log(icicleData)
+                icicleData = buildIcicleHierarchy(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
-
-                console.log(mainOutput)
-                let onlyOutputLines = mainOutput.split('\n').filter(line => line.trim() !== '').slice(5).slice(0, -1);
-                onlyOutputLines = onlyOutputLines.map(str => str.replace(/==>/g, '=>'));
-                console.log(onlyOutputLines)
-
-                icicleData = buildIcicleHierarchy(onlyOutputLines)
+                icicleData = buildIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                console.log(mainOutput)
+                // Still wrapper to be written
             }
 
             // Set output in respective column
@@ -191,11 +187,12 @@ const ScriptExecutor = () => {
             }
 
         } catch (error) {
+            const errorMessage = `Error while visualizing data: ${error.message}`
             if (columnIndex === 1) {
-                setOutput1(`Error: ${error.message}`);
+                setOutput1(errorMessage);
                 setExtraOutput1('');
             } else {
-                setOutput2(`Error: ${error.message}`);
+                setOutput2(errorMessage);
                 setExtraOutput2('');
             }
         }
