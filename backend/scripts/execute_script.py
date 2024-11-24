@@ -97,7 +97,7 @@ def execute_script_func(
     column_values,
     number_of_output_lines,
 ):
-    print("Starting script:", datetime.datetime.now())
+    print("Script started at:", datetime.datetime.now())
     if slider_min >= slider_max:
         print("Error: Check slider values, min:", slider_min, ">= max:", slider_max)
         return
@@ -745,6 +745,6 @@ def remove_grade_zero(tmp):
 def df_to_file(df, file_path):
     with open(file_path, "w", newline="", encoding="utf-8") as file:
         for _, row in df.iterrows():
-            itemset_str = " || ".join(row["itemsets"])
+            itemset_str = " || ".join(list(map(str, list(row["itemsets"]))))
             support_relative = row["support"]
             file.write(f"{itemset_str} #SUP:{support_relative}\n")

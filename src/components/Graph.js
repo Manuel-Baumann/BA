@@ -152,22 +152,24 @@ export const IcicleWithHover = ({ data }) => {
             .attr('stroke', '#fff')
             .style('cursor', 'pointer')
             .on('mouseover', function (event, d) {
-                setHoveredNode(d);
-                try {
-                    setBreadcrumbPath(d.ancestors().reverse().slice(1));
-                } catch (error) {
-                    console.error('Error updating breadcrumbs:', error);
-                    setBreadcrumbPath([]); // Clear breadcrumbs in case of error
-                }
+                if (d.data.name && d.data.name !== 'undefined') {
+                    setHoveredNode(d);
+                    try {
+                        setBreadcrumbPath(d.ancestors().reverse().slice(1));
+                    } catch (error) {
+                        console.error('Error updating breadcrumbs:', error);
+                        setBreadcrumbPath([]); // Clear breadcrumbs in case of error
+                    }
 
-                highlightPath(d);
-                d3.select(tooltipRef.current)
-                    .style('opacity', 1)
-                    .html(`
-              <strong>Name:</strong> ${d.data.name}<br/>
-              <strong>Size:</strong> ${d.value}<br/>
-              <strong>Depth:</strong> ${d.depth}
-            `);
+                    highlightPath(d);
+                    d3.select(tooltipRef.current)
+                        .style('opacity', 1)
+                        .html(`
+                <strong>Name:</strong> ${d.data.name}<br/>
+                <strong>Size:</strong> ${d.value}<br/>
+                <strong>Depth:</strong> ${d.depth}
+                `);
+                }
             })
             .on('mousemove', function (event) {
                 d3.select(tooltipRef.current)

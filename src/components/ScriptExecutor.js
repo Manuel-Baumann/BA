@@ -71,11 +71,17 @@ const infoMinMax = "Students will be sorted by their mean grade. Only those with
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
     const [output2, setOutput2] = useState('');
-    const [extraOutput1, setExtraOutput1] = useState('');  // Extra output for column 1
-    const [extraOutput2, setExtraOutput2] = useState('');  // Extra output for column 2
+    const [postProcOutput1, setPostProcOutput1] = useState('');  // Postproc output for column 1
+    const [postProcOutput2, setPostProcOutput2] = useState('');  // Postproc output for column 2
+    const [preOutput1, setPreOutput1] = useState('')
+    const [preOutput2, setPreOutput2] = useState('')
+    const [secondFreqItemsetOutput1, setSecondFreqItemsetOutput1] = useState('');
+    const [secondFreqItemsetOutput2, setSecondFreqItemsetOutput2] = useState('');
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
     const [data1, setData1] = useState(buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"]));//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
+    const [secondFreqItemsetData1, setSecondFreqItemsetData1] = useState({})
+    const [secondFreqItemsetData2, setSecondFreqItemsetData2] = useState({})
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
@@ -122,10 +128,10 @@ const ScriptExecutor = () => {
             const errorMessage = `Error while executing script: ${error.message}`
             if (columnIndex === 1) {
                 setOutput1(errorMessage);
-                setExtraOutput1('');
+                setPostProcOutput1('');
             } else {
                 setOutput2(errorMessage);
-                setExtraOutput2('');
+                setPostProcOutput2('');
             }
         }
         try {
@@ -160,44 +166,64 @@ const ScriptExecutor = () => {
             const preprocOutput = responseLines.filter(line => line.startsWith('"""POSTPROCESSING"""')).map(line => line.slice(20)).join('\n\n');
 
             // Set data for Graph
-            //let sunburstData = {}
             let icicleData = {}
+            let secondIcicleData = {}
+            let secondOutput = ''
             const mainOutputSplitted = mainOutput.split('\n')
+
             // Only get output lines and remove last 'successful timestamp' line
             const index = mainOutputSplitted.findIndex(line => line.startsWith('OUTPUT:'))
             let onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+            const preOutput = mainOutputSplitted.slice(0, index + 1).filter(line => line.trim() !== '')
 
+            // Fine tune data based on the algorithm that was selected
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchy(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
                 const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
-                const secondOutput = onlyOutput.slice(indexSecond + 1)
+                secondOutput = onlyOutput.slice(indexSecond + 1)
                 onlyOutput = onlyOutput.slice(0, indexSecond)
                 icicleData = buildIcicleHierarchy(onlyOutput)
-                console.log(secondOutput)
+                secondIcicleData = buildIcicleHierarchy(secondOutput)
             }
 
             // Set output in respective column
             if (columnIndex === 1) {
-                setOutput1(mainOutput);
-                setExtraOutput1(preprocOutput);//POSTPROCESSING
+                setPostProcOutput1(preprocOutput);
+                setPreOutput1(preOutput.slice(0, -1).join('\n'))
+                setOutput1(onlyOutput.join('\n'));
                 setData1(icicleData);
+                if (selectedValues.at(-1) === 'Frequent Itemsets') {
+                    setSecondFreqItemsetData1(secondIcicleData)
+                    setSecondFreqItemsetOutput1(secondOutput.join('\n'));
+                } else {
+                    setSecondFreqItemsetData1({})
+                    setSecondFreqItemsetOutput1('');
+                }
             } else {
-                setOutput2(mainOutput);
-                setExtraOutput2(preprocOutput); //POSTPROCESSING
+                setPostProcOutput2(preprocOutput);
+                setPreOutput2(preOutput.slice(0, -1).join('\n'))
+                setOutput2(onlyOutput.join('\n'));
                 setData2(icicleData);
+                if (selectedValues.at(-1) === 'Frequent Itemsets') {
+                    setSecondFreqItemsetData2(secondIcicleData)
+                    setSecondFreqItemsetOutput2(secondOutput.join('\n'));
+                } else {
+                    setSecondFreqItemsetData2({})
+                    setSecondFreqItemsetOutput2('');
+                }
             }
 
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
             if (columnIndex === 1) {
                 setOutput1(errorMessage);
-                setExtraOutput1('');
+                setPostProcOutput1('');
             } else {
                 setOutput2(errorMessage);
-                setExtraOutput2('');
+                setPostProcOutput2('');
             }
         }
     };
@@ -302,15 +328,22 @@ const ScriptExecutor = () => {
                     </button>
                     <div>
                         <h3>Postprocessing:</h3>
-                        <pre className="pre">{extraOutput1}</pre>  {/* Extra output for column 1 */}
+                        <pre className="pre">{postProcOutput1}</pre>  {/* Extra output for column 1 */}
+                        <h3>Information about the algorithm:</h3>
+                        <pre className="pre">{preOutput1}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
                         <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                             <IcicleWithHover data={data1}
                             /></div>
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
-                    </div>
 
+                        {secondFreqItemsetOutput1 != '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                            <IcicleWithHover data={secondFreqItemsetData1}
+                            /></div>
+                            <h3>Output:</h3>
+                            <pre>{secondFreqItemsetOutput1}</pre></div> : null}
+                    </div>
                 </div>
 
                 <div className="column">
@@ -357,12 +390,20 @@ const ScriptExecutor = () => {
                     </button>
                     <div>
                         <h3>Postprocessing:</h3>
-                        <pre className="pre">{extraOutput2}</pre>  {/* Extra output for column 2 */}
+                        <pre className="pre">{postProcOutput2}</pre>  {/* Extra output for column 2 */}
+                        <h3>Information about the algorithm:</h3>
+                        <pre className="pre">{preOutput2}</pre>  {/* Extra output for column 1 */}
+                        {/* Graph */}
                         <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                             <IcicleWithHover data={data2}
                             /></div>
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
+                        {secondFreqItemsetOutput1 != '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                            <IcicleWithHover data={secondFreqItemsetData2}
+                            /></div>
+                            <h3>Output:</h3>
+                            <pre>{secondFreqItemsetOutput2}</pre></div> : null}
                     </div>
                 </div>
             </div>
@@ -375,8 +416,8 @@ const ScriptExecutor = () => {
                     <hr />
                     <div className="compare-output">
                         <h3>Compare Outputs</h3>
-                        <pre>{extraOutput1}</pre>
-                        <pre>{extraOutput2}</pre>
+                        <pre>{postProcOutput1}</pre>
+                        <pre>{postProcOutput2}</pre>
                     </div>
                 </>
             )}
