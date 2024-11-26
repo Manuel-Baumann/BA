@@ -1,7 +1,7 @@
 // Sunburst.js
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-
+/*
 export const Graph = ({ data }) => {
     const ref = useRef();
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -92,7 +92,7 @@ export const Graph = ({ data }) => {
             <svg ref={ref} style={{ width: '100%', height: '100%' }} />
         </div>
     );
-};
+};*/
 
 export const IcicleWithHover = ({ data }) => {
     const ref = useRef();
@@ -114,6 +114,19 @@ export const IcicleWithHover = ({ data }) => {
 
         return () => resizeObserver.disconnect();
     }, []);
+
+    useEffect(() => {
+        try {
+            if (hoveredNode) {
+                setBreadcrumbPath(hoveredNode.ancestors().reverse().slice(1));
+            } else {
+                setBreadcrumbPath([]);
+            }
+        } catch (error) {
+            console.error('Error updating breadcrumbs:', error);
+            setBreadcrumbPath([]); // Clear breadcrumbs in case of error
+        }
+    }, [hoveredNode]);
 
     useEffect(() => {
         if (dimensions.width === 0 || dimensions.height === 0) return;
@@ -154,40 +167,45 @@ export const IcicleWithHover = ({ data }) => {
             .on('mouseover', function (event, d) {
                 if (d.data.name && d.data.name !== 'undefined') {
                     setHoveredNode(d);
-                    try {
-                        setBreadcrumbPath(d.ancestors().reverse().slice(1));
-                    } catch (error) {
-                        console.error('Error updating breadcrumbs:', error);
-                        setBreadcrumbPath([]); // Clear breadcrumbs in case of error
-                    }
-
                     highlightPath(d);
                     d3.select(tooltipRef.current)
                         .style('opacity', 1)
                         .html(`
-                <strong>Name:</strong> ${d.data.name}<br/>
-                <strong>Size:</strong> ${d.value}<br/>
-                <strong>Depth:</strong> ${d.depth}
-                `);
+                            <strong>Name:</strong> ${d.data.name}<br/>
+                            <strong>Size:</strong> ${d.value}<br/>
+                            <strong>Depth:</strong> ${d.depth}
+                            `);
+                } else {
+                    setHoveredNode(null)
+                    highlightPath();
+                    d3.select(tooltipRef.current)
+                        .style('opacity', 1)
+                        .html(`<strong>Hover over a node</strong>`);
                 }
             })
-            .on('mousemove', function (event) {
+            /*.on('mousemove', function (event) {
                 d3.select(tooltipRef.current)
                     .style('left', `${event.pageX + 10}px`)
                     .style('top', `${event.pageY + 10}px`);
-            })
+            })*/
             .on('mouseout', function () {
                 setHoveredNode(null);
-                setBreadcrumbPath([]);
                 resetHighlight();
                 d3.select(tooltipRef.current).style('opacity', 0);
             });
 
         // Highlight only the path to the hovered node (not its children)
         function highlightPath(node) {
-            rects.style('opacity', (d) =>
-                node.ancestors().includes(d) ? 1 : 0.4
-            );
+            if (node) {
+                rects.style('opacity', (d) => 0.4);
+                let currentNode = node
+                while (currentNode !== null) {
+                    rects
+                        .filter((d) => d.depth === currentNode.depth && d.data.name === currentNode.data.name) // Match specific depth and name
+                        .style('opacity', 1); // Set desired opacity
+                    currentNode = currentNode.parent
+                }
+            }
         }
 
         // Reset highlight
