@@ -64,8 +64,6 @@ const radioGroupColumnData = [
         header: 'Degree'
     }
 ]
-
-
 const infoMinMax = "Students will be sorted by their mean grade. Only those within the range (in %) will be considered."
 
 const ScriptExecutor = () => {
@@ -95,19 +93,21 @@ const ScriptExecutor = () => {
         column1: radioGroupColumnData.map(group => group.options[0]),  // Set the first option for each group
         column2: radioGroupColumnData.map(group => group.options[0])   // Set the first option for each group
     });
+    const [checkAlgoParams, setCheckAlgoParams] = useState({
+        column1: false,
+        column2: false
+    })
+    const [minSups, setMinSups] = useState({
+        column1: 0,
+        column2: 0
+    })
+    const [minConfs, setMinConfs] = useState({
+        column1: 0,
+        column2: 0
+    })
 
-    const handleGroupSelection = (groupIndex, value) => {
-        const updatedSelections = [...selectedValues];
-        updatedSelections[groupIndex] = value;
-        setSelectedValues(updatedSelections);
-    };
 
-    // Handle the range slider change for both columns
-    const handleRangeChange = (values, columnIndex) => {
-        const newRangeValues = { ...rangeValues };
-        newRangeValues[`column${columnIndex}`] = values;
-        setRangeValues(newRangeValues);
-    };
+
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -122,7 +122,12 @@ const ScriptExecutor = () => {
                 columnValues: columnValues,
                 sliderMin: range[0],
                 sliderMax: range[1],
-                numberOfOutputLines
+                numberOfOutputLines,
+                algoParams: {
+                    toBeUsed: checkAlgoParams[`column${columnIndex}`],
+                    minSup: minSups[`column${columnIndex}`] !== 0 ? minSups[`column${columnIndex}`][0] : 0,
+                    minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
+                }
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -242,6 +247,32 @@ const ScriptExecutor = () => {
         setCompareOutputVisible(true)
     };
 
+    // Function to handle checkbox toggle
+    const handleCheckboxChange = (event, columnIndex) => {
+        const newCheck = { ...checkAlgoParams }
+        newCheck[`column${columnIndex}`] = event.target.checked
+        setCheckAlgoParams(newCheck);
+    };
+
+    const handleGroupSelection = (groupIndex, value) => {
+        const updatedSelections = [...selectedValues];
+        updatedSelections[groupIndex] = value;
+        setSelectedValues(updatedSelections);
+    };
+
+    // Handle the range slider change for both columns
+    const handleRangeChange = (values, columnIndex) => {
+        const newRangeValues = { ...rangeValues };
+        newRangeValues[`column${columnIndex}`] = values;
+        setRangeValues(newRangeValues);
+    };
+
+    // Handle the range slider change for both columns
+    const handleMinSupChange = (value, columnIndex) => {
+        const newMinSupValues = { ...minSups };
+        newMinSupValues[`column${columnIndex}`] = value;
+        setMinSups(newMinSupValues);
+    };
 
     return (
         <div className="container">
@@ -283,7 +314,6 @@ const ScriptExecutor = () => {
                         onChange={(value) => setNumberOfOutputLines(value)}
                     />
                 </div>
-
             </div>
 
             <div className="columns-container">
@@ -325,6 +355,27 @@ const ScriptExecutor = () => {
                             onChange={(values) => handleRangeChange(values, 1)}
                         />
                     </div>
+                    {/* Checkbox and Slider for min_sup/min_conf  */}
+                    <>
+
+                        <label htmlFor='checkbox'>
+                            Use custom parameters for algorithm
+                            <input type="checkbox" id="c1" name="c1" value="params1" checked={checkAlgoParams.column1} onChange={(event) => handleCheckboxChange(event, 1)} />
+                        </label>
+                        {checkAlgoParams.column1 && selectedValues.at(-1) === 'Frequent Itemsets' ? <div className="slider-container">
+                            <span className="info-icon">ℹ️
+                                <span className="tooltip-text">Choose the minimum support for the frequent itemsets</span>
+                            </span>
+                            <label>Minimum support: {minSups.column1}%</label>
+                            <Slider
+                                range
+                                min={0}
+                                max={100}
+                                value={minSups.column1}
+                                onChange={(value) => handleMinSupChange(value, 1)}
+                            />
+                        </div> : null}
+                    </>
                     <button className="execute-button" onClick={() => executeScript(1)}>
                         Execute Algorithm
                     </button>
@@ -386,7 +437,27 @@ const ScriptExecutor = () => {
                             onChange={(values) => handleRangeChange(values, 2)}
                         />
                     </div>
+                    {/* Checkbox and Slider for min_sup/min_conf  */}
+                    <>
 
+                        <label htmlFor='checkbox'>
+                            Use custom parameters for algorithm
+                            <input type="checkbox" id="c2" name="c2" value="params2" checked={checkAlgoParams.column2} onChange={(event) => handleCheckboxChange(event, 2)} />
+                        </label>
+                        {checkAlgoParams.column2 && selectedValues.at(-1) === 'Frequent Itemsets' ? <div className="slider-container">
+                            <span className="info-icon">ℹ️
+                                <span className="tooltip-text">Choose the minimum support for the frequent itemsets</span>
+                            </span>
+                            <label>Minimum support: {minSups.column2}%</label>
+                            <Slider
+                                range
+                                min={0}
+                                max={100}
+                                value={minSups.column2}
+                                onChange={(value) => handleMinSupChange(value, 2)}
+                            />
+                        </div> : null}
+                    </>
                     <button className="execute-button" onClick={() => executeScript(2)}>
                         Execute Algorithm
                     </button>

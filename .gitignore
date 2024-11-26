@@ -26,3 +26,4 @@ backend/Results
 backend/number_name.txt
 backend/scripts/__pycache__
 backend/logs.log
+backend/__pycache__

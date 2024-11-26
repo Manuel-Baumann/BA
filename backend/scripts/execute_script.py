@@ -83,6 +83,9 @@ bins_bool = True
 work_renamed = "./csv/work_renamed.csv"
 not_passed_prefix = "(Not passed) "
 seq_patt_spmf_algo_name = ""
+min_sup_FE = 200
+min_conf_FE = 200
+bool_use_params = False
 
 
 def execute_script_func(
@@ -96,6 +99,9 @@ def execute_script_func(
     slider_max,
     column_values,
     number_of_output_lines,
+    bool_use_params,
+    min_sup,
+    min_conf,
 ):
     print("Script started at:", datetime.datetime.now())
     if slider_min >= slider_max:
@@ -115,6 +121,21 @@ def execute_script_func(
         seq_patt_spmf_algo_name = "ClaSP"
     elif insights == 2:
         seq_patt_spmf_algo_name = "MaxSP"
+
+    global min_sup_FE
+    global min_conf_FE
+    global bool_use_params_FE
+    if bool_use_params == "False":
+        bool_use_params = False
+    else:
+        bool_use_params = True
+    bool_use_params_FE = bool_use_params
+    if bool_use_params:
+        min_sup_FE = float(min_sup) / 100
+        min_conf_FE = float(min_conf) / 100
+        print("Custom minimum support:", min_sup)
+        print("Custom minimum confidence:", min_conf)
+
     ###########################################################################
     # Doesnt work for slidermin = 0.75, slidermax = 1
     min_sup = 0.8
@@ -235,6 +256,8 @@ def execute_script_func(
             student_courses_df[str_course_grade]
         )
         bool_matr1 = pd.DataFrame(bool_matr1, columns=te1.columns_)
+        if bool_use_params_FE:
+            min_sup = min_sup_FE
         frequent_itemset = apriori(bool_matr1, min_support=min_sup, use_colnames=True)
         # print("Number of rules before filtering:", frequent_itemset.shape[0])
 
@@ -278,7 +301,8 @@ def execute_script_func(
             student_courses_df[str_course_grade]
         )
         bool_matr2 = pd.DataFrame(bool_matr2, columns=te2.columns_)
-
+        if bool_use_params_FE:
+            min_sup = min_sup_FE
         frequent_itemset = apriori(bool_matr2, min_support=min_sup, use_colnames=True)
         if frequent_itemset.shape[0] > 0:
             frequent_itemset = frequent_itemset[
@@ -336,6 +360,9 @@ def execute_script_func(
         create_spmf_ass_rules_input(work, tmp, grade_bool, all_distinct_courses)
 
         # arguments: minsup, minconf
+        if bool_use_params_FE:
+            min_sup = min_sup_FE
+            min_conf = min_conf_FE
         spmf = Spmf(
             "FPGrowth_association_rules",
             input_filename=tmp,
@@ -371,6 +398,8 @@ def execute_script_func(
         if not bool_all_courses:
             min_sup = 0.03
         semester_basis = not bool_year
+        if bool_use_params_FE:
+            min_sup = min_sup_FE
         create_prefix_span_input_and_run(
             work, semester_basis, grade_bool, min_sup, 30, tmp, tmp2, tmp3
         )

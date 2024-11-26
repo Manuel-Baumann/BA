@@ -25,6 +25,9 @@ try:
     number_of_output_lines = (
         os.getenv("NUMBER_OF_OUTPUT_LINES", "").replace("[", "").replace("]", "")
     )
+    bool_use_params = os.getenv("BOOL_USE_PARAMS")
+    min_sup = os.getenv("MIN_SUP")
+    min_conf = os.getenv("MIN_CONF")
     # Example usage of the values
 
     #
@@ -73,6 +76,9 @@ try:
         int(slider_max),
         column_values,
         int(number_of_output_lines),
+        bool_use_params,
+        min_sup,
+        min_conf,
     )
 
 except Exception as e:

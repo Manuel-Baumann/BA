@@ -18,6 +18,9 @@ def execute_script():
     slider_min = data.get("sliderMin")
     slider_max = data.get("sliderMax")
     number_of_output_lines = data.get("numberOfOutputLines")
+    bool_use_params = data.get("algoParams").get("toBeUsed")
+    min_sup = data.get("algoParams").get("minSup")
+    min_conf = data.get("algoParams").get("minConf")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -27,6 +30,9 @@ def execute_script():
         "SLIDER_MIN": str(slider_min),
         "SLIDER_MAX": str(slider_max),
         "NUMBER_OF_OUTPUT_LINES": str(number_of_output_lines),
+        "BOOL_USE_PARAMS": str(bool_use_params),
+        "MIN_SUP": str(min_sup),
+        "MIN_CONF": str(min_conf),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")
