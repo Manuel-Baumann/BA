@@ -4,7 +4,7 @@ import Slider from 'rc-slider';
 import { IcicleWithHover } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
-import { /*buildHierarchy,*/ buildIcicleHierarchy } from './helperFunctions';
+import { buildIcicleHierarchy } from './helperFunctions';
 
 // New data structure for dynamic radio button groups
 // values: [options1, options2, ...]
@@ -215,7 +215,7 @@ const ScriptExecutor = () => {
                     setSecondFreqItemsetOutput2('');
                 }
             }
-
+            setCompareOutputVisible(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
             if (columnIndex === 1) {
@@ -238,6 +238,8 @@ const ScriptExecutor = () => {
 
         setOutput1(uniqueToColumn1.join('\n'));
         setOutput2(uniqueToColumn2.join('\n'));
+
+        setCompareOutputVisible(true)
     };
 
 
@@ -338,7 +340,7 @@ const ScriptExecutor = () => {
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
 
-                        {secondFreqItemsetOutput1 != '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                        {secondFreqItemsetOutput1 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                             <IcicleWithHover data={secondFreqItemsetData1}
                             /></div>
                             <h3>Output:</h3>
@@ -399,7 +401,7 @@ const ScriptExecutor = () => {
                             /></div>
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
-                        {secondFreqItemsetOutput1 != '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                        {secondFreqItemsetOutput2 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                             <IcicleWithHover data={secondFreqItemsetData2}
                             /></div>
                             <h3>Output:</h3>
