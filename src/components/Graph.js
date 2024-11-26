@@ -149,12 +149,17 @@ export const IcicleWithHover = ({ data }) => {
         const partition = d3.partition().size([width, height]);
         partition(root);
 
-        const color = d3.scaleSequential([0, root.height], d3.interpolateBlues);
+
+        const color = d3.scaleSequential([0, root.height], d3.scaleLinear()
+            .domain([0, 1]) // Domain from 0 to 1, to control intensity across the data range
+            .range(["#006400", "#a8d08d"])); // Start with a dark green (#006400) and transition to a lighter green (#a8d08d)
+
+
 
         // Draw each rectangle
         const rects = svg
             .selectAll('rect')
-            .data(root.descendants())
+            .data(root.descendants().filter(d => d.depth > 0))
             .enter()
             .append('rect')
             .attr('x', (d) => d.x0)
@@ -199,7 +204,7 @@ export const IcicleWithHover = ({ data }) => {
             if (node) {
                 rects.style('opacity', (d) => 0.4);
                 let currentNode = node
-                while (currentNode !== null) {
+                while (currentNode.parent !== null) {
                     rects
                         .filter((d) => d.depth === currentNode.depth && d.data.name === currentNode.data.name) // Match specific depth and name
                         .style('opacity', 1); // Set desired opacity
@@ -216,7 +221,7 @@ export const IcicleWithHover = ({ data }) => {
         // Add labels to each rectangle if there's enough space
         svg
             .selectAll('text')
-            .data(root.descendants())
+            .data(root.descendants().filter(d => d.depth > 0))
             .enter()
             .append('text')
             .attr('x', (d) => d.x0 + 5)
@@ -243,12 +248,14 @@ export const IcicleWithHover = ({ data }) => {
                     gap: '5px',
                 }}
             >
-                {breadcrumbPath.map((node, i) => (
+                {breadcrumbPath.length !== 0 ? breadcrumbPath.map((node, i) => (
                     <React.Fragment key={node.id || `${node.data.name}-${i}`}>
                         {i > 0 && <span>➔</span>}
                         <span>{node.data.name}</span>
                     </React.Fragment>
-                ))
+                )) : <React.Fragment>
+                    <span>Hover over a node</span>
+                </React.Fragment>
                 }
             </div>
 
