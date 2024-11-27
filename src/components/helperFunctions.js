@@ -1,13 +1,4 @@
-export const getSunburstDataFromFile = (textFile) => {
-    fetch(`file:///Results/res.txt`)
-        .then((res) => res.text())
-        .then((text) => {
-            console.log('asklödfjhaksdjf')
-            console.log(text)
-        })
-        .catch((e) => console.error(e));
-    return
-}
+
 
 // Function to parse a single line into a path array and support value
 function parsePattern(line) {
@@ -116,7 +107,10 @@ function adjustSupportRecursively(node) {
 
 
 export const buildIcicleHierarchy = (patterns) => {
-
+    if (patterns === undefined || patterns == []) {
+        console.log("empty: ", buildHierarchy(["Empty dataset #SUP:1"]))
+        return buildIcicleHierarchy(["Empty dataset #SUP:1"])
+    }
     const root = { name: "", children: [] };
     // Process each pattern, parse it, and add it to the tree
     let parsedData = patterns.map(item => {

@@ -1,8 +1,12 @@
-import pandas as pd
 import csv
+import pandas as pd
+from helper_freq_itemsets import (
+    execute_freq_itemset_algorithm,
+)
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules as arule
+from mlxtend.frequent_patterns import fpmax
 from spmf import Spmf
 from pycaret.datasets import get_data
 import datetime
@@ -81,6 +85,9 @@ mandatory_courses_dict = {
 }
 bins_bool = True
 work_renamed = "./csv/work_renamed.csv"
+tmp = "./Results/tmp.txt"
+tmp2 = "./Results/tmp2.txt"
+tmp3 = "./Results/tmp3.txt"
 not_passed_prefix = "(Not passed) "
 seq_patt_spmf_algo_name = ""
 min_sup_FE = 200
@@ -93,7 +100,7 @@ def execute_script_func(
     bool_courses,
     bool_year,
     bool_all_courses,
-    insights,
+    normal_closed_maximal,
     sets_rules_patterns,
     slider_min,
     slider_max,
@@ -115,11 +122,11 @@ def execute_script_func(
         TRUNCATE_OUTPUT = 30000
 
     global seq_patt_spmf_algo_name
-    if insights == 0:
+    if normal_closed_maximal == 0:
         seq_patt_spmf_algo_name = "PrefixSpan"
-    elif insights == 1:
+    elif normal_closed_maximal == 1:
         seq_patt_spmf_algo_name = "ClaSP"
-    elif insights == 2:
+    elif normal_closed_maximal == 2:
         seq_patt_spmf_algo_name = "MaxSP"
 
     global min_sup_FE
@@ -151,13 +158,9 @@ def execute_script_func(
         else:
             min_sup = 0.8
 
-    tmp = "./Results/tmp.txt"
-    tmp2 = "./Results/tmp2.txt"
-    tmp3 = "./Results/tmp3.txt"
-
     # renaming()
-    edu_data = pd.read_csv(work_renamed)
-    work = edu_data.copy()
+    # edu_data = pd.read_csv(work_renamed)
+    work = pd.read_csv(work_renamed)
 
     if bins_bool:
         if bool_courses:
@@ -245,6 +248,11 @@ def execute_script_func(
     )
     print("Mean grade of mean grade of all students:", mean_range["mean_score"].mean())
 
+    grade_bool = not bool_courses
+    global all_distinct_courses
+    all_distinct_courses = create_all_distinct_courses_from_df(work, grade_bool)
+    create_numbers_to_names()
+
     ################################## Frequent Itemsets ##################################
     if sets_rules_patterns == 0:
         min_sup = 0.4
@@ -256,38 +264,6 @@ def execute_script_func(
             student_courses_df[str_course_grade]
         )
         bool_matr1 = pd.DataFrame(bool_matr1, columns=te1.columns_)
-        if bool_use_params_FE:
-            min_sup = min_sup_FE
-        frequent_itemset = apriori(bool_matr1, min_support=min_sup, use_colnames=True)
-        # print("Number of rules before filtering:", frequent_itemset.shape[0])
-
-        if bool_courses:
-            print(
-                '"""POSTPROCESSING"""Only frequent itemsets, that don\'t include any mandatory courses are shown.'
-            )
-            if frequent_itemset.shape[0] > 0:
-                frequent_itemset = frequent_itemset[
-                    ~frequent_itemset["itemsets"].apply(
-                        lambda x: not x.isdisjoint(mandatory_courses_arr)
-                    )
-                ]
-                frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
-        else:
-            print(
-                '"""POSTPROCESSING"""Frequent Itemsets including grade 0.0 were removed.'
-            )
-            frequent_itemset = frequent_itemset[
-                ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
-            ]
-        frequent_itemset = frequent_itemset.sort_values(by="support", ascending=False)
-        print(
-            "Number of frequent itemsets:",
-            frequent_itemset.shape[0],
-        )
-        # Print df to output file, so that it can be visualized
-        df_to_file(frequent_itemset, tmp)
-        print("OUTPUT: FREQUENT ITEMSETS")
-        print_output(tmp)
 
         ### Find frequent course/grade combinations within one semester/year ###
         sem_year = "semester"
@@ -301,42 +277,35 @@ def execute_script_func(
             student_courses_df[str_course_grade]
         )
         bool_matr2 = pd.DataFrame(bool_matr2, columns=te2.columns_)
+
+        # Take custom parameters
         if bool_use_params_FE:
             min_sup = min_sup_FE
-        frequent_itemset = apriori(bool_matr2, min_support=min_sup, use_colnames=True)
-        if frequent_itemset.shape[0] > 0:
-            frequent_itemset = frequent_itemset[
-                ~frequent_itemset["itemsets"].apply(
-                    lambda x: x.issubset(mandatory_courses_arr)
-                )
-            ]
-        frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
-        frequent_itemset = frequent_itemset.sort_values(by="support", ascending=False)
-        # if bool_courses:
-        #    if frequent_itemset.shape[0] > 0:
-        #       frequent_itemset = frequent_itemset[
-        #          ~frequent_itemset["itemsets"].apply(
-        #             lambda x: not x.isdisjoint(mandatory_courses_arr)
-        #        )
-        #   ]
-        #  frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
-        if not bool_courses:
-            frequent_itemset = frequent_itemset[
-                ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
-            ]
 
-        # Print df to output file, so that it can be visualized
-        df_to_file(frequent_itemset, tmp)
-        print(
+        # Run the algorithm
+        # Writes output for first algo into tmp and second into tmp2
+        # Then prints the output
+        execute_freq_itemset_algorithm(
+            work,
+            normal_closed_maximal,
+            bool_courses,
+            mandatory_courses_arr,
+            min_sup,
+            bool_matr1,
+            bool_matr2,
+            df_to_file,
+            grade_bool,
+            all_distinct_courses,
+        )
+        print("OUTPUT: FREQUENT ITEMSETS")
+        print_output(tmp)
+        """print(
             f"OUTPUT: FREQUENT {str_course_grade.upper()} combinations within one {sem_year.upper()}"
         )
-        print_output(tmp)
+        print_output(tmp2)"""
 
     ################################## End: Frequent Itemsets ##################################
-    grade_bool = not bool_courses
-    global all_distinct_courses
-    all_distinct_courses = create_all_distinct_courses_from_df(work, grade_bool)
-    create_numbers_to_names()
+
     ################################## Association Rules ##################################
     if sets_rules_patterns == 1:
         min_sup = 0.8
@@ -371,8 +340,8 @@ def execute_script_func(
             spmf_bin_location_dir="../../Data/spmf/",
         )
         spmf.run()
+        decode_spmf_ass_rules(tmp2, tmp)
         if not grade_bool:
-            decode_spmf_ass_rules(tmp2, tmp)
             # Filter out rules with only mandatory courses
             print(
                 '"""POSTPROCESSING"""Rules that include only mandatory courses were filtered out.'
@@ -382,7 +351,6 @@ def execute_script_func(
         else:
             # Grades
             # arguments: minsup, max sequence length
-            decode_spmf_ass_rules(tmp2, tmp)
             sort_spmf_ass_rules(tmp)
         make_support_relative(tmp, work["subjectId"].nunique())
         print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
@@ -411,7 +379,12 @@ def execute_script_func(
             remove_grade_zero(tmp)
         print("OUTPUT: SEQUENTIAL PATTERNS")
         print_output(tmp)
-    print("successful", datetime.datetime.now())
+    print('"""POSTPROCESSING"""Script finished successfully: ', datetime.datetime.now())
+
+
+############################################################################
+#########################   Helper functions    ############################
+############################################################################
 
 
 def create_all_distinct_courses_from_csv(csv_file_input=work_renamed, grade_bool=False):
@@ -475,7 +448,8 @@ def create_spmf_ass_rules_input(df, tmp, grade_bool, all_distinct_courses):
     with open(tmp, "w", newline="", encoding="utf-8") as file:
         for sub in subjects:
             if sub != []:
-                for i in range(len(sub)):
+                len_sub = len(sub)
+                for i in range(len_sub):
                     sub[i] = all_distinct_courses.index(sub[i])
                 sub = sorted(sub)
                 for course in sub:
@@ -488,10 +462,11 @@ def decode_spmf_ass_rules(input_path, output_path):
         with open(output_path, "w", newline="", encoding="utf-8") as g:
             for line in f:
                 words = line.split()
-                for i in range(len(words)):
+                len_words = len(words)
+                for i in range(len_words):
                     if words[i].startswith("#"):
-                        g.write("          ")
-                        for j in range(len(words) - i):
+                        g.write(" ")
+                        for j in range(len_words - i):
                             g.write(words[i + j] + " ")
                         break
                     elif words[i].isnumeric():

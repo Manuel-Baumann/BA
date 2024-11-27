@@ -76,7 +76,7 @@ const ScriptExecutor = () => {
     const [secondFreqItemsetOutput1, setSecondFreqItemsetOutput1] = useState('');
     const [secondFreqItemsetOutput2, setSecondFreqItemsetOutput2] = useState('');
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
-    const [data1, setData1] = useState(buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"]));//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
+    const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
     const [secondFreqItemsetData1, setSecondFreqItemsetData1] = useState({})
     const [secondFreqItemsetData2, setSecondFreqItemsetData2] = useState({})
@@ -165,7 +165,6 @@ const ScriptExecutor = () => {
                 // Remove all lines from first to last, but leave in important information and the last ======
                 responseLines = responseLines.slice(0, first).concat(responseLines[leaveIn].trim()).concat(responseLines[leaveIn + 1]).concat(responseLines.slice(last + 1));
             }
-
             // Filter POSTPROCESSING information and actual output and remove prefix for postprocessing
             const mainOutput = responseLines.filter(line => !line.startsWith('"""POSTPROCESSING"""')).join('\n');
             const preprocOutput = responseLines.filter(line => line.startsWith('"""POSTPROCESSING"""')).map(line => line.slice(20)).join('\n\n');
@@ -176,49 +175,50 @@ const ScriptExecutor = () => {
             let secondOutput = ''
             const mainOutputSplitted = mainOutput.split('\n')
 
-            // Only get output lines and remove last 'successful timestamp' line
+            // Only get output lines
             const index = mainOutputSplitted.findIndex(line => line.startsWith('OUTPUT:'))
-            let onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '').slice(0, -1)
+            let onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '')
             const preOutput = mainOutputSplitted.slice(0, index + 1).filter(line => line.trim() !== '')
 
+            //console.log(onlyOutput)
             // Fine tune data based on the algorithm that was selected
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchy(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
-                secondOutput = onlyOutput.slice(indexSecond + 1)
-                onlyOutput = onlyOutput.slice(0, indexSecond)
+                //const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
+                //secondOutput = onlyOutput.slice(indexSecond + 1)
+                //onlyOutput = onlyOutput.slice(0, indexSecond)
                 icicleData = buildIcicleHierarchy(onlyOutput)
-                secondIcicleData = buildIcicleHierarchy(secondOutput)
+                //secondIcicleData = buildIcicleHierarchy(secondOutput)
             }
 
             // Set output in respective column
             if (columnIndex === 1) {
                 setPostProcOutput1(preprocOutput);
-                setPreOutput1(preOutput.slice(0, -1).join('\n'))
+                setPreOutput1(preOutput.join('\n'))
                 setOutput1(onlyOutput.join('\n'));
                 setData1(icicleData);
-                if (selectedValues.at(-1) === 'Frequent Itemsets') {
+                /*if (selectedValues.at(-1) === 'Frequent Itemsets') {
                     setSecondFreqItemsetData1(secondIcicleData)
                     setSecondFreqItemsetOutput1(secondOutput.join('\n'));
                 } else {
                     setSecondFreqItemsetData1({})
                     setSecondFreqItemsetOutput1('');
-                }
+                }*/
             } else {
                 setPostProcOutput2(preprocOutput);
-                setPreOutput2(preOutput.slice(0, -1).join('\n'))
+                setPreOutput2(preOutput.join('\n'))
                 setOutput2(onlyOutput.join('\n'));
                 setData2(icicleData);
-                if (selectedValues.at(-1) === 'Frequent Itemsets') {
+                /*if (selectedValues.at(-1) === 'Frequent Itemsets') {
                     setSecondFreqItemsetData2(secondIcicleData)
                     setSecondFreqItemsetOutput2(secondOutput.join('\n'));
                 } else {
                     setSecondFreqItemsetData2({})
                     setSecondFreqItemsetOutput2('');
-                }
+                }*/
             }
             setCompareOutputVisible(false)
         } catch (error) {

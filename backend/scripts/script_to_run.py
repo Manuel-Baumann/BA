@@ -40,7 +40,7 @@ try:
         True,
         True,
     )
-    insights = 0
+    normal_closed_maximal = 0
     sets_rules_patterns = 0
 
     if values[0] == "Only students who graduated at RWTH":
@@ -52,9 +52,9 @@ try:
     if values[3] == "Only not passed courses":
         bool_all_courses = False
     if values[4] == "Closed":
-        insights = 1
+        normal_closed_maximal = 1
     if values[4] == "Maximal":
-        insights = 2
+        normal_closed_maximal = 2
     if values[-1] == "Association Rules":
         sets_rules_patterns = 1
     if values[-1] == "Sequence Patterns":
@@ -70,7 +70,7 @@ try:
         bool_courses,
         bool_year,
         bool_all_courses,
-        insights,
+        normal_closed_maximal,
         sets_rules_patterns,
         int(slider_min),
         int(slider_max),
