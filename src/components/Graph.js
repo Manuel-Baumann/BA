@@ -1,98 +1,6 @@
 // Sunburst.js
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-/*
-export const Graph = ({ data }) => {
-    const ref = useRef();
-    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-    useEffect(() => {
-        const resizeObserver = new ResizeObserver((entries) => {
-            if (!entries || entries.length === 0) return;
-            const { width, height } = entries[0].contentRect;
-            setDimensions({ width, height });
-        });
-
-        if (ref.current) {
-            resizeObserver.observe(ref.current);
-        }
-
-        return () => resizeObserver.disconnect();
-    }, []);
-
-    useEffect(() => {
-        if (dimensions.width === 0 || dimensions.height === 0) return;
-
-        // Setup dimensions based on component's current width and height
-        const radius = Math.min(dimensions.width, dimensions.height) / 2;
-        const svg = d3.select(ref.current);
-
-        svg.selectAll('*').remove();  // Clear previous render
-
-        const g = svg
-            .attr('width', dimensions.width)
-            .attr('height', dimensions.height)
-            .append('g')
-            .attr('transform', `translate(${dimensions.width / 2},${dimensions.height / 2})`);
-
-        // Create the partition layout
-        const partition = d3.partition().size([2 * Math.PI, radius]);
-
-        // Create a root hierarchy
-        const root = d3
-            .hierarchy(data)
-            .sum((d) => d.size)
-            .sort((a, b) => b.value - a.value);
-
-        // Generate the arcs
-        partition(root);
-        const arc = d3
-            .arc()
-            .startAngle((d) => d.x0)
-            .endAngle((d) => d.x1)
-            .innerRadius((d) => d.y0)
-            .outerRadius((d) => d.y1);
-
-        // Draw each segment
-        g.selectAll('path')
-            .data(root.descendants())
-            .enter()
-            .append('path')
-            .attr('display', (d) => (d.depth ? null : 'none'))
-            .attr('d', arc)
-            .style('stroke', '#fff')
-            .style('fill', (d) => (d.depth === 1 ? '#6baed6' : d.depth === 2 ? '#9ecae1' : '#c6dbef'))
-            .on('mouseover', function (event, d) {
-                d3.select(this).style('fill', '#ff7f0e');
-            })
-            .on('mouseout', function (event, d) {
-                d3.select(this).style('fill', (d) => (d.depth === 1 ? '#6baed6' : d.depth === 2 ? '#9ecae1' : '#c6dbef'));
-            });
-
-        // Add labels for each node
-        g.selectAll('text')
-            .data(root.descendants())
-            .enter()
-            .append('text')
-            .attr('transform', function (d) {
-                const x = (d.x0 + d.x1) / 2 * (180 / Math.PI);  // Convert radians to degrees
-                const y = (d.y0 + d.y1) / 2;
-                return `rotate(${x - 90}) translate(${y},0) ${x > 180 ? "rotate(180)" : ""}`;
-            })
-            .attr('dy', '0.35em')
-            .attr('text-anchor', d => ((d.x0 + d.x1) / 2) > Math.PI ? 'end' : 'start')
-            .text(d => d.data.name)
-            .style('font-size', '10px')
-            .style('fill', '#333');
-
-    }, [data, dimensions]);
-
-    return (
-        <div style={{ width: '100%', height: '100%' }}>
-            <svg ref={ref} style={{ width: '100%', height: '100%' }} />
-        </div>
-    );
-};*/
 
 export const IcicleWithHover = ({ data }) => {
     const ref = useRef();
@@ -253,9 +161,7 @@ export const IcicleWithHover = ({ data }) => {
                         {i > 0 && <span>➔</span>}
                         <span>{node.data.name}</span>
                     </React.Fragment>
-                )) : <React.Fragment>
-                    <span>Hover over a node</span>
-                </React.Fragment>
+                )) : <span>Hover over a node</span>
                 }
             </div>
 

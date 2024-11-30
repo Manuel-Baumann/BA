@@ -47,10 +47,8 @@ export const buildHierarchy = (patterns) => {
 function parsePatternIcicle(line) {
     const [pattern, supportStr] = line.split("#SUP:");
     const support = parseFloat(supportStr.trim());
-
     // Split the pattern into sequence steps, each step separated by '=>'
     const steps = pattern.trim().split("=>").map(step => step.trim());
-
     return { steps, support };
 }
 
@@ -102,13 +100,14 @@ function adjustSupportRecursively(node) {
         node.size = 0
     }
     //console.log("node", node.name, "support", node.size)
+    console.log(parseFloat((node.size + childSupportSum).toFixed(4)))
     return parseFloat((node.size + childSupportSum).toFixed(4));
 }
 
 
 export const buildIcicleHierarchy = (patterns) => {
     if (patterns === undefined || patterns == []) {
-        console.log("empty: ", buildHierarchy(["Empty dataset #SUP:1"]))
+        console.log("empty: ", buildIcicleHierarchy(["Empty dataset #SUP:1"]))
         return buildIcicleHierarchy(["Empty dataset #SUP:1"])
     }
     const root = { name: "", children: [] };
@@ -127,4 +126,67 @@ export const buildIcicleHierarchy = (patterns) => {
 
     adjustSupportRecursively(root);
     return root
+}
+
+// // // // // // Frequent Itemsets // // // // // //
+const parseFrequentItemsetPatterns = (line) => {
+    const [pattern, supportStr] = line.split("#SUP:");
+    const support = parseFloat(supportStr.trim());
+    const elements = pattern.trim().split("||").map(e => e.trim());
+    return { elements, support };
+}
+
+function addToTreeRecursivelyFrequentItemsets(tree, remainingPatterns, currentElements = []) {
+    const levelElements = remainingPatterns
+        .filter(({ elements }) => elements.length === currentElements.length + 1)
+        .filter(({ elements }) =>
+            currentElements.every(ce => elements.includes(ce))
+        );
+
+    levelElements.forEach(({ elements, support }) => {
+        const nextElement = elements.find(e => !currentElements.includes(e));
+        if (!nextElement) return;
+
+        // Check if the element already exists at this level
+        let childNode = tree.children.find(child => child.name === nextElement);
+        if (!childNode) {
+            // Create the child node if not exists
+            childNode = { name: nextElement, children: [], size: support };
+            tree.children.push(childNode);
+
+            // Sort children by size (descending)
+            tree.children.sort((a, b) => b.size - a.size);
+        }
+
+        // Recurse for further levels
+        const nextElements = [...currentElements, nextElement];
+        addToTreeRecursivelyFrequentItemsets(childNode, remainingPatterns, nextElements);
+    });
+}
+
+export const buildFrequentItemsetHierarchy = (patterns) => {
+    if (!patterns || patterns.length === 0) {
+        return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"]);
+    }
+
+    const root = { name: "Root", children: [] };
+
+    // Parse input patterns
+    const parsedData = patterns.map(parseFrequentItemsetPatterns);
+
+    // Add first-level elements
+    const firstLevelElements = parsedData.filter(({ elements }) => elements.length === 1);
+    firstLevelElements.forEach(({ elements, support }) => {
+        const element = elements[0];
+        root.children.push({ name: element, children: [], size: support });
+    });
+
+    // Sort first-level elements by size (descending)
+    root.children.sort((a, b) => b.size - a.size);
+
+    // Add higher-level elements recursively
+    addToTreeRecursivelyFrequentItemsets(root, parsedData);
+
+    adjustSupportRecursively(root);
+    return root;
 }

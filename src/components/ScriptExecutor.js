@@ -4,7 +4,7 @@ import Slider from 'rc-slider';
 import { IcicleWithHover } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
-import { buildIcicleHierarchy } from './helperFunctions';
+import { buildIcicleHierarchy, buildFrequentItemsetHierarchy } from './helperFunctions';
 
 // New data structure for dynamic radio button groups
 // values: [options1, options2, ...]
@@ -190,7 +190,7 @@ const ScriptExecutor = () => {
                 //const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
                 //secondOutput = onlyOutput.slice(indexSecond + 1)
                 //onlyOutput = onlyOutput.slice(0, indexSecond)
-                icicleData = buildIcicleHierarchy(onlyOutput)
+                icicleData = buildFrequentItemsetHierarchy(onlyOutput)
                 //secondIcicleData = buildIcicleHierarchy(secondOutput)
             }
 
@@ -356,7 +356,7 @@ const ScriptExecutor = () => {
                         />
                     </div>
                     {/* Checkbox and Slider for min_sup/min_conf  */}
-                    <>
+                    <div>
 
                         <label htmlFor='checkbox'>
                             Use custom parameters for algorithm
@@ -364,7 +364,7 @@ const ScriptExecutor = () => {
                         </label>
                         {checkAlgoParams.column1 && selectedValues.at(-1) === 'Frequent Itemsets' ? <div className="slider-container">
                             <span className="info-icon">ℹ️
-                                <span className="tooltip-text">Choose the minimum support for the frequent itemsets</span>
+                                <span className="tooltip-text"> Choose the minimum support for the frequent itemsets </span>
                             </span>
                             <label>Minimum support: {minSups.column1}%</label>
                             <Slider
@@ -375,7 +375,7 @@ const ScriptExecutor = () => {
                                 onChange={(value) => handleMinSupChange(value, 1)}
                             />
                         </div> : null}
-                    </>
+                    </div>
                     <button className="execute-button" onClick={() => executeScript(1)}>
                         Execute Algorithm
                     </button>
@@ -438,7 +438,7 @@ const ScriptExecutor = () => {
                         />
                     </div>
                     {/* Checkbox and Slider for min_sup/min_conf  */}
-                    <>
+                    <div>
 
                         <label htmlFor='checkbox'>
                             Use custom parameters for algorithm
@@ -457,7 +457,7 @@ const ScriptExecutor = () => {
                                 onChange={(value) => handleMinSupChange(value, 2)}
                             />
                         </div> : null}
-                    </>
+                    </div>
                     <button className="execute-button" onClick={() => executeScript(2)}>
                         Execute Algorithm
                     </button>
