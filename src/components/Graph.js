@@ -62,8 +62,6 @@ export const IcicleWithHover = ({ data }) => {
             .domain([0, 1]) // Domain from 0 to 1, to control intensity across the data range
             .range(["#006400", "#a8d08d"])); // Start with a dark green (#006400) and transition to a lighter green (#a8d08d)
 
-
-
         // Draw each rectangle
         const rects = svg
             .selectAll('rect')
@@ -85,7 +83,7 @@ export const IcicleWithHover = ({ data }) => {
                         .style('opacity', 1)
                         .html(`
                             <strong>Name:</strong> ${d.data.name}<br/>
-                            <strong>Size:</strong> ${d.value}<br/>
+                            <strong>Support:</strong> ${d.data.size}<br/>
                             <strong>Depth:</strong> ${d.depth}
                             `);
                 } else {
@@ -114,13 +112,12 @@ export const IcicleWithHover = ({ data }) => {
                 let currentNode = node
                 while (currentNode.parent !== null) {
                     rects
-                        .filter((d) => d.depth === currentNode.depth && d.data.name === currentNode.data.name) // Match specific depth and name
+                        .filter((d) => d.depth === currentNode.depth && d.data.name === currentNode.data.name && currentNode.x0 == d.x0 && currentNode.y0 == d.y0 && currentNode.x1 == d.x1 && currentNode.y1 == d.y1) // Match specific depth and name
                         .style('opacity', 1); // Set desired opacity
                     currentNode = currentNode.parent
                 }
             }
         }
-
         // Reset highlight
         function resetHighlight() {
             rects.style('opacity', 1);
@@ -135,7 +132,7 @@ export const IcicleWithHover = ({ data }) => {
             .attr('x', (d) => d.x0 + 5)
             .attr('y', (d) => d.y0 + (d.y1 - d.y0) / 2)
             .attr('dy', '0.35em')
-            .text((d) => (d.x1 - d.x0 > 40 ? d.data.name : '')) // Display label if there's space
+            .text((d) => (d.x1 - d.x0 > 40 ? '' : '')) // Display label if there's space, d.data.name
             .style('font-size', '10px')
             .style('fill', 'black');
 

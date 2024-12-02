@@ -77,8 +77,9 @@ function addToTreeIcicle(tree, steps, support) {
 }
 
 // Function to adjust the size of parent nodes
+// BAD FUNCTION -> multiple children with high support go over the edge of parent node
 function adjustSupportRecursively(node) {
-    //console.log(node)
+    console.log("Dont use this function!!!!!!")
     if (!node.children || node.children.length === 0) {
         // Leaf node: no children to process
         //console.log("no children", node.size)
@@ -99,8 +100,8 @@ function adjustSupportRecursively(node) {
     else {
         node.size = 0
     }
-    //console.log("node", node.name, "support", node.size)
-    console.log(parseFloat((node.size + childSupportSum).toFixed(4)))
+    // console.log("node", node.name, "support", node.size)
+    // console.log(parseFloat((node.size + childSupportSum).toFixed(4)))
     return parseFloat((node.size + childSupportSum).toFixed(4));
 }
 
@@ -124,18 +125,13 @@ export const buildIcicleHierarchy = (patterns) => {
         addToTreeIcicle(root, steps, support);
     });
 
-    adjustSupportRecursively(root);
+    //console.log(root)
+    //adjustSupportRecursively(root);
+    //console.log(root)
     return root
 }
 
 // // // // // // Frequent Itemsets // // // // // //
-const parseFrequentItemsetPatterns = (line) => {
-    const [pattern, supportStr] = line.split("#SUP:");
-    const support = parseFloat(supportStr.trim());
-    const elements = pattern.trim().split("||").map(e => e.trim());
-    return { elements, support };
-}
-
 function addToTreeRecursivelyFrequentItemsets(tree, remainingPatterns, currentElements = []) {
     const levelElements = remainingPatterns
         .filter(({ elements }) => elements.length === currentElements.length + 1)
@@ -164,6 +160,19 @@ function addToTreeRecursivelyFrequentItemsets(tree, remainingPatterns, currentEl
     });
 }
 
+const parseFrequentItemsetPatterns = (line) => {
+    const [pattern, supportStr] = line.split("#SUP:");
+    const support = parseFloat(supportStr.trim());
+    const elements = pattern.trim().split("||").map(e => e.trim());
+    return { elements, support };
+}
+
+const sortNodesRecursively = (node) => {
+    if (node.children)
+        node.children.forEach(n => sortNodesRecursively(n))
+    node.children.sort((a, b) => b.size - a.size)
+}
+
 export const buildFrequentItemsetHierarchy = (patterns) => {
     if (!patterns || patterns.length === 0) {
         return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"]);
@@ -182,11 +191,21 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     });
 
     // Sort first-level elements by size (descending)
-    root.children.sort((a, b) => b.size - a.size);
+    // Recursively sort nodes
+
+    sortNodesRecursively(root)
 
     // Add higher-level elements recursively
     addToTreeRecursivelyFrequentItemsets(root, parsedData);
 
-    adjustSupportRecursively(root);
+    // Adjust size correctly
+    adjustFrequentItemsetSizeRecursively(root, 0, 0)
+
     return root;
+}
+
+const adjustFrequentItemsetSizeRecursively = (node, siblingSize, parentSize) => {
+    if (siblingSize !== 0) {
+
+    }
 }

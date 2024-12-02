@@ -386,8 +386,8 @@ const ScriptExecutor = () => {
                         <pre className="pre">{preOutput1}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
                         <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={data1}
-                            /></div>
+                            <IcicleWithHover data={data1} />
+                        </div>
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
 
