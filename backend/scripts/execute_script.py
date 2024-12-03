@@ -8,7 +8,7 @@ from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules as arule
 from mlxtend.frequent_patterns import fpmax
 from spmf import Spmf
-from pycaret.datasets import get_data
+#from pycaret.datasets import get_data
 import datetime
 
 mandatory_courses_arr = [
