@@ -245,7 +245,7 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
   return root;
 };*/
 
-const buildFrequentItemsetHierarchy = (patterns) => {
+export const buildFrequentItemsetHierarchy = (patterns) => {
     if (!patterns || patterns.length === 0) {
         return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"]);
     }
@@ -279,15 +279,18 @@ const buildFrequentItemsetHierarchy = (patterns) => {
         // Filter out freq itemsets that dont include elementName and pass the remaining sets without elementName
         const elementName = elements[0]
         const siblingsData = parsedData
-            .filter(({ itemset }) => itemset.contains(elementName))
-            .map(({ itemset }) =>
-                itemset.filter((item) => item !== elementName)
-            );
-        addChildrenRecursively(siblingsData, root.children.find(c => c.name === elementName));
+            .filter(({ elements }) => elements.includes(elementName))
+        console.log(siblingsData)
+        const siblingsDataWithoutElement = siblingsData.map(obj => ({
+            ...obj,
+            elements: obj.elements.filter(item => item != elementName && item != [])
+        }))
+        addChildrenRecursively(siblingsDataWithoutElement, root.children.find(c => c.name === elementName));
     });
     // Now every child should have correct size with sum of size of all children <= parentSize
     // Now adjust to be represented correctly by D3...
-    adjustSizeRecursively(root);
+    console.log("Adjust???")
+    //adjustSizeRecursively(root);
     return root;
 };
 
@@ -298,13 +301,11 @@ const buildFrequentItemsetHierarchy = (patterns) => {
  * It returns the support for all nodesit has used up, so that it can be filtered out for its siblings.
  */
 const addChildrenRecursively = (siblingsData, treeParentNode) => {
-    if (siblingsData.length === 0) return [];
-
+    if (siblingsData.length === 0 || siblingsData == [[]]) return [];
     // Get biggest element in remaining data
     const individualSiblingsSorted = siblingsData
         .filter(({ elements }) => elements.length === 1)
         .sort((a, b) => b.support - a.support);
-
     //Map used to capture the support already used by siblings
     const notUsedSiblingSupportMap = new Map()
     individualSiblingsSorted.forEach(({ elements, support }) => notUsedSiblingSupportMap.set(elements[0], support))
@@ -315,6 +316,7 @@ const addChildrenRecursively = (siblingsData, treeParentNode) => {
     // Siblings size should be: supNotUsedByBiggerSiblings / parentSup * parentSize
     individualSiblingsSorted.forEach((currentSibling) => {
         const currentName = currentSibling.elements[0]
+
         const currentSize = notUsedSiblingSupportMap.get(currentName) / treeParentNode.support * treeParentNode.size
         treeParentNode.children.push({
             name: currentName,
@@ -327,27 +329,26 @@ const addChildrenRecursively = (siblingsData, treeParentNode) => {
 
         // Add children of biggest child by calling this function on all filtered itemsets that 
         // contained the current Nodes name
-        const newData = siblingsData.filter(({ elements }) => elements.contains(currentName))
-            .map(({ itemset }) =>
-                itemset.filter((item) => item !== elementName)
-            );
-        addChildrenRecursively(newData, treeParentNode.children.find(c => c.name === currentName))
+        const newData = siblingsData.filter(({ elements }) => elements.includes(currentName))
+        const newDataWithoutElement = newData.map(obj => ({
+            ...obj,
+            elements: obj.elements.filter(item => item != currentName && item != [])
+        }))
+
+        addChildrenRecursively(newDataWithoutElement, treeParentNode.children.find(c => c.name === currentName))
 
         // Substract used support by children manually from unused support for following siblings
         // Leave out already added siblings
         notYetAddedSiblings.filter((s) => s !== currentName)
         for (const key of notYetAddedSiblings) {
             // Find out how much support was used for key by currentName
-            const amountUsed = newData.filter(({ elements }) => elements.contains(key)).reduce((acc, { itemset, support }) => acc + support, 0.0)
+            const amountUsed = newData.filter(({ elements }) => elements.includes(key)).reduce((acc, { elements, support }) => acc + support, 0.0)
             // Substract that amount in map
             const newValue = notUsedSiblingSupportMap.get(key) - amountUsed
             if (newValue < 0) console.log("Some error occured when calculating support used by siblings.")
             notUsedSiblingSupportMap.set(key, newValue)
         }
     })
-
-    // Since the biggest node stays at its size, its children's sizes can be adjusted
-    addChildrenRecursively();
 };
 
 /**
