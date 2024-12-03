@@ -85,6 +85,7 @@ function addToTreeIcicle(tree, steps, support) {
                 name: step,
                 children: [],
                 size: index === steps.length - 1 ? support : 0,
+                support: index === steps.length - 1 ? support : 0
             };
             currentNode.children.push(childNode);
         } else {
@@ -105,7 +106,7 @@ function addToTreeIcicle(tree, steps, support) {
 
 // Function to adjust the size of parent nodes
 // BAD FUNCTION -> multiple children with high support go over the edge of parent node
-function adjustSupportRecursively(node) {
+function adjustSizeRecursively(node) {
     console.log(
         "Dont use this function, except you know what youre doing!!!!!!"
     );
@@ -119,7 +120,7 @@ function adjustSupportRecursively(node) {
 
     // Calculate the total child support
     const childSupportSum = node.children.reduce((sum, child) => {
-        return sum + adjustSupportRecursively(child);
+        return sum + adjustSizeRecursively(child);
     }, 0);
 
     // Subtract the children's support sum from the parent node
@@ -162,6 +163,7 @@ export const buildIcicleHierarchy = (patterns) => {
 };
 
 // // // // // // Frequent Itemsets // // // // // //
+
 /*function addToTreeRecursivelyFrequentItemsets(
   tree,
   remainingPatterns,
@@ -198,15 +200,7 @@ export const buildIcicleHierarchy = (patterns) => {
   });
 }
 
-const parseFrequentItemsetPatterns = (line) => {
-  const [pattern, supportStr] = line.split("#SUP:");
-  const support = parseFloat(supportStr.trim());
-  const elements = pattern
-    .trim()
-    .split("||")
-    .map((e) => e.trim());
-  return { elements, support };
-};
+
 
 const sortNodesRecursively = (node) => {
   if (node.children) node.children.forEach((n) => sortNodesRecursively(n));
@@ -251,7 +245,7 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
   return root;
 };*/
 
-const buildFrequentItemsetHierarchy = (data) => {
+const buildFrequentItemsetHierarchy = (patterns) => {
     if (!patterns || patterns.length === 0) {
         return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"]);
     }
@@ -276,22 +270,24 @@ const buildFrequentItemsetHierarchy = (data) => {
                 name: element,
                 children: [],
                 size: support,
+                support: support
             });
         });
 
     // Add children recursively for each first-level-element
     firstLevelElements.forEach(({ elements, support }) => {
-        // Filter out freq itemsets that dont include elements[0] and pass the remaining sets without elements[0]
-        const relevantParsedData = parsedData
-            .filter(({ itemset }) => itemset.contains(elements[0]))
+        // Filter out freq itemsets that dont include elementName and pass the remaining sets without elementName
+        const elementName = elements[0]
+        const siblingsData = parsedData
+            .filter(({ itemset }) => itemset.contains(elementName))
             .map(({ itemset }) =>
-                itemset.filter((item) => item !== elements[0])
+                itemset.filter((item) => item !== elementName)
             );
-        addChildrenRecursively(parsedData, support);
+        addChildrenRecursively(siblingsData, root.children.find(c => c.name === elementName));
     });
     // Now every child should have correct size with sum of size of all children <= parentSize
     // Now adjust to be represented correctly by D3...
-    adjustSupportRecursively(root);
+    adjustSizeRecursively(root);
     return root;
 };
 
@@ -299,22 +295,75 @@ const buildFrequentItemsetHierarchy = (data) => {
  * This function adds children recursively to nodes, based on the parsed data it is given
  * It calls itself on its children and filters the parsed data to squash smaller children
  * if they are represented under its bigger children.
- * It returns the parsed data it has used, so that it can be filtered out for its siblings.
+ * It returns the support for all nodesit has used up, so that it can be filtered out for its siblings.
  */
-const addChildrenRecursively = (relevantParsedData, node, parentSize) => {
-    if (relevantParsedData.length === 0) return [];
-    const siblingsSorted = relevantParsedData
-        .filter((fi) => fi.length === 1)
-        .sort((a, b) => b.support - a.support);
-    // Dont change size of biggest child and add it
-    node.push({
-        name: siblingsSorted[0].elements[0],
-        children: [],
-        size: siblingsSorted[0].support,
-    });
+const addChildrenRecursively = (siblingsData, treeParentNode) => {
+    if (siblingsData.length === 0) return [];
 
-    // Add children of biggest child
+    // Get biggest element in remaining data
+    const individualSiblingsSorted = siblingsData
+        .filter(({ elements }) => elements.length === 1)
+        .sort((a, b) => b.support - a.support);
+
+    //Map used to capture the support already used by siblings
+    const notUsedSiblingSupportMap = new Map()
+    individualSiblingsSorted.forEach(({ elements, support }) => notUsedSiblingSupportMap.set(elements[0], support))
+
+    // Keeping track of already added and not yet added siblings
+    let notYetAddedSiblings = individualSiblingsSorted.map(({ elements }) => elements[0])
+
+    // Siblings size should be: supNotUsedByBiggerSiblings / parentSup * parentSize
+    individualSiblingsSorted.forEach((currentSibling) => {
+        const currentName = currentSibling.elements[0]
+        const currentSize = notUsedSiblingSupportMap.get(currentName) / treeParentNode.support * treeParentNode.size
+        treeParentNode.children.push({
+            name: currentName,
+            children: [],
+            size: currentSize,
+            support: currentSibling.support
+        });
+        // Siblings support was fully used up, since it was added to parent
+        notUsedSiblingSupportMap.set(currentName, 0)
+
+        // Add children of biggest child by calling this function on all filtered itemsets that 
+        // contained the current Nodes name
+        const newData = siblingsData.filter(({ elements }) => elements.contains(currentName))
+            .map(({ itemset }) =>
+                itemset.filter((item) => item !== elementName)
+            );
+        addChildrenRecursively(newData, treeParentNode.children.find(c => c.name === currentName))
+
+        // Substract used support by children manually from unused support for following siblings
+        // Leave out already added siblings
+        notYetAddedSiblings.filter((s) => s !== currentName)
+        for (const key of notYetAddedSiblings) {
+            // Find out how much support was used for key by currentName
+            const amountUsed = newData.filter(({ elements }) => elements.contains(key)).reduce((acc, { itemset, support }) => acc + support, 0.0)
+            // Substract that amount in map
+            const newValue = notUsedSiblingSupportMap.get(key) - amountUsed
+            if (newValue < 0) console.log("Some error occured when calculating support used by siblings.")
+            notUsedSiblingSupportMap.set(key, newValue)
+        }
+    })
 
     // Since the biggest node stays at its size, its children's sizes can be adjusted
     addChildrenRecursively();
+};
+
+/**
+ * Before the childrens sizes are set, the parents size should be final
+ * 
+ * All siblings sizes should be set in order from biggest to smallest
+ * A node size is only set, when all its descendants are set.
+ * 
+ */
+
+const parseFrequentItemsetPatterns = (line) => {
+    const [pattern, supportStr] = line.split("#SUP:");
+    const support = parseFloat(supportStr.trim());
+    const elements = pattern
+        .trim()
+        .split("||")
+        .map((e) => e.trim());
+    return { elements, support };
 };

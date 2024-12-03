@@ -83,7 +83,7 @@ export const IcicleWithHover = ({ data }) => {
                         .style('opacity', 1)
                         .html(`
                             <strong>Name:</strong> ${d.data.name}<br/>
-                            <strong>Support:</strong> ${d.data.size}<br/>
+                            <strong>Support:</strong> ${d.data.support}<br/>
                             <strong>Depth:</strong> ${d.depth}
                             `);
                 } else {
