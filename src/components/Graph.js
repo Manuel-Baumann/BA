@@ -133,7 +133,7 @@ export const IcicleWithHover = ({ data }) => {
             .attr('x', (d) => d.x0 + 5)
             .attr('y', (d) => d.y0 + (d.y1 - d.y0) / 2)
             .attr('dy', '0.35em')
-            .text((d) => (d.x1 - d.x0 > 40 ? '' : '')) // Display label if there's space, d.data.name
+            .text((d) => (d.x1 - d.x0 > 40 ? d.data.name : '')) // Display label if there's space, d.data.name
             .style('font-size', '10px')
             .style('fill', 'black');
 

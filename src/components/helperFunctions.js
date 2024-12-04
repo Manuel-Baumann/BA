@@ -254,7 +254,7 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     const root = {
         name: "Root",
         children: [],
-        size: 1,
+        size: 0,
         support: 1
     };
 
@@ -267,7 +267,7 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     // Now adjust to be represented correctly by D3...
     console.log("Adjust???")
     console.log(root)
-    //adjustSizeRecursively(root);
+    adjustSizeRecursively(root);
     return root;
 };
 
@@ -299,13 +299,12 @@ const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToPa
     individualSiblingsSorted.forEach((currentSibling) => {
         const currentName = currentSibling.elements[0]
         const currentPath = [...pathToParent, currentName]
-        console.log("currentpath", currentPath)
         const finalSum = currentSibling.support - getSumOfAlreadyExistingNodes(rootNode, [...currentPath])
-        console.log(finalSum, currentSibling.support)
+        const treeParentNodeSize = treeParentNode.size == 0 ? 1 : treeParentNode.size
         treeParentNode.children.push({
             name: currentName,
             children: [],
-            size: finalSum / treeParentNode.support * treeParentNode.size,//currentSize,
+            size: finalSum,//finalSum / treeParentNode.support * treeParentNodeSize,//currentSize,
             support: currentSibling.support,
             finalSum: finalSum//notUsedSiblingSupportMap.get(currentName)
         });
