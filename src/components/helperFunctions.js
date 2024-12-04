@@ -1,3 +1,5 @@
+import { filter, tree } from "d3";
+
 // Function to parse a single line into a path array and support value
 function parsePattern(line) {
     const [pattern, supportStr] = line.split("#SUP:");
@@ -260,7 +262,7 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     const parsedData = patterns.map(parseFrequentItemsetPatterns);
 
     // Add children recursively
-    addChildrenRecursively(parsedData, root)
+    addChildrenRecursively(root, parsedData, root, [])
     // Now every child should have correct size with sum of size of all children <= parentSize
     // Now adjust to be represented correctly by D3...
     console.log("Adjust???")
@@ -275,16 +277,16 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
  * if they are represented under its bigger children.
  * It returns the support for all nodesit has used up, so that it can be filtered out for its siblings.
  */
-const addChildrenRecursively = (siblingsData, treeParentNode) => {
+const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToParent) => {
     if (siblingsData.length === 0 || siblingsData == [[]]) return [];
     // Get biggest element in remaining data
     const individualSiblingsSorted = siblingsData
         .filter(({ elements }) => elements.length === 1)
         .sort((a, b) => b.support - a.support);
-    console.log("individualSiblingsSorted", individualSiblingsSorted, "with parent:", treeParentNode.name)
+    // console.log("individualSiblingsSorted", individualSiblingsSorted, "with parent:", treeParentNode.name)
     //Map used to capture the support already used by siblings
-    const notUsedSiblingSupportMap = new Map()
-    individualSiblingsSorted.forEach(({ elements, support }) => notUsedSiblingSupportMap.set(elements[0], support))
+    ///const notUsedSiblingSupportMap = new Map()
+    ///individualSiblingsSorted.forEach(({ elements, support }) => notUsedSiblingSupportMap.set(elements[0], support))
     /////console.log("Create new sibling support map:")
     /////for (const [k, v] of notUsedSiblingSupportMap) {
     /////console.log("not used sibling support map:", k, v)
@@ -296,19 +298,69 @@ const addChildrenRecursively = (siblingsData, treeParentNode) => {
     // Siblings size should be: supNotUsedByBiggerSiblings / parentSup * parentSize
     individualSiblingsSorted.forEach((currentSibling) => {
         const currentName = currentSibling.elements[0]
+        const currentPath = [...pathToParent, currentName]
         // console.log("Current Name", currentName)
 
-        const currentSize = notUsedSiblingSupportMap.get(currentName) / treeParentNode.support * treeParentNode.size
+        ///const currentSize = notUsedSiblingSupportMap.get(currentName) / treeParentNode.support * treeParentNode.size
+
+        // Get size of new node from siblingsData
+        /*const maxSiblingLength = siblingsData.reduce((max, sib) => Math.max(max, sib.elements.length), 0)
+        const setsWithAlreadyAddedAndCurrent = siblingsData.filter(({ elements }) => elements.includes(currentName))
+            .filter(({ elements }) => {
+                // Keep set if it was already used (to filter it out) or if it is the element alone
+                if (elements.length === 1) return true
+                let boolAlreadyAdded = false
+                alreadyAddedSiblings.forEach(aaS => {
+                    if (elements.includes(aaS)) boolAlreadyAdded = true
+                })
+                return boolAlreadyAdded
+            })
+        console.log("Siblingsdata", siblingsData, "setsWithAlreadyAddedAndCurrent", setsWithAlreadyAddedAndCurrent, "current:", currentName)
+        console.log("Parent: ", treeParentNode.name, "max sibling length:", maxSiblingLength)
+        console.log("Already done siblings: ", alreadyAddedSiblings, "Not yet added", notYetAddedSiblings)
+        // From the only set with len one: -> Inclusion-Exclusion Principle
+        // - substract sum of support of all sets with even len
+        // - add sum of support of all sets with odd len
+        const sumOfAllOddLengthedSets = setsWithAlreadyAddedAndCurrent.filter(({ elements }) => elements.length % 2 === 1).reduce((sum, sib) => sum + sib.support, 0)
+        const sumOfAllEvenLengthedSets = setsWithAlreadyAddedAndCurrent.filter(({ elements }) => elements.length % 2 === 0).reduce((sum, sib) => sum + sib.support, 0)
+        const finalSum = sumOfAllOddLengthedSets - sumOfAllEvenLengthedSets
+        if (finalSum < 0)
+            console.error("Final sum < 0:", finalSum, "sum of all odd lengthed sets", sumOfAllOddLengthedSets, "sum of all even lengthed sets", sumOfAllEvenLengthedSets,)
+        console.log("Final sum:", finalSum, "sum of all odd lengthed sets", sumOfAllOddLengthedSets, "sum of all even lengthed sets", sumOfAllEvenLengthedSets,)
+        */
+        // Already added children in parent tree must be checked for children that have the same name as the current Node
+        // Their left over support/finalSum is to be substracted from current support
+        /*console.log("parent children", treeParentNode.children)
+        const finalSum = currentSibling.support - treeParentNode.children
+            .reduce((totalSum, sibling) => {
+                const alreadyAddednephew = sibling.children
+                console.log("''''''''''''BEGIN'''''''''''''")
+                console.log("sibling", sibling)
+                console.log("already added nephew", alreadyAddednephew)
+                if (!alreadyAddednephew) return totalSum
+
+                const currentnephew = alreadyAddednephew.filter((nephew) => nephew.name === currentName)
+                console.log("current nephew array", currentnephew)
+                if (!currentnephew || currentnephew.length !== 1) return totalSum
+                console.log("current nephew entry", currentnephew[0])
+                console.log("nephew finalsum", currentnephew[0].finalSum)
+                console.log("''''''''''''END'''''''''''''")
+                return totalSum + currentnephew[0].finalSum
+            }, 0)
+        console.log("Name", currentName, "currentsupport:", currentSibling.support, "finalsum:", finalSum)*/
+        console.log("currentpath", currentPath)
+        const finalSum = currentSibling.support - getSumOfAlreadyExistingNodes(rootNode, [...currentPath])
+        console.log(finalSum, currentSibling.support)
         treeParentNode.children.push({
             name: currentName,
             children: [],
-            size: currentSize,
+            size: finalSum / treeParentNode.support * treeParentNode.size,//currentSize,
             support: currentSibling.support,
-            notUsedSiblSup: notUsedSiblingSupportMap.get(currentName)
+            finalSum: finalSum//notUsedSiblingSupportMap.get(currentName)
         });
         // Siblings support was fully used up, since it was added to parent
         /////console.log("USED: ", notUsedSiblingSupportMap.get(currentName), "name:", currentName, "Current siblings:", individualSiblingsSorted.map(s => [s.elements[0], s.support]), "current Parent", treeParentNode.name)
-        notUsedSiblingSupportMap.set(currentName, 0)
+        ///notUsedSiblingSupportMap.set(currentName, 0)
 
         // Add children of biggest child by calling this function on all filtered itemsets that 
         // contained the current Nodes name
@@ -324,13 +376,13 @@ const addChildrenRecursively = (siblingsData, treeParentNode) => {
             elements: obj.elements.filter(item => item !== currentName)
         }))// Funktioniert
 
-        addChildrenRecursively(newDataWithoutElement, treeParentNode.children.find(c => c.name === currentName))
+        addChildrenRecursively(rootNode, newDataWithoutElement, treeParentNode.children.find(c => c.name === currentName), [...currentPath])
 
         // Substract used support by children manually from unused support for following siblings
         // Leave out already added siblings
         notYetAddedSiblings = notYetAddedSiblings.filter((s) => s !== currentName)
         alreadyAddedSiblings.push(currentName)
-        for (const key of notYetAddedSiblings) {
+        /*for (const key of notYetAddedSiblings) {
             // Find out how much support was used for key by currentName
             //if (currentName === "1.0") console.log("not yet added:", notYetAddedSiblings, "newData", newData)
             //const amountUsed = newData.filter(({ elements }) => elements.includes(key) && elements.length === 2).reduce((acc, { elements, support }) => acc + support, 0.0)
@@ -354,7 +406,7 @@ const addChildrenRecursively = (siblingsData, treeParentNode) => {
             /////for (const [k, v] of notUsedSiblingSupportMap) {
             /////console.log("Current node: ", currentName, "current key: ", key, "not used sibling support map:", k, v)
             /////}
-        }
+        }*/
     })
 };
 
@@ -375,3 +427,57 @@ const parseFrequentItemsetPatterns = (line) => {
         .map((e) => e.trim());
     return { elements, support };
 };
+/*
+const getSupportUsedByNephews = (parentNode, currentName, degreeOfRelationship) => {
+    while (degreeOfRelationship > 0) {
+
+        degreeOfRelationship -= 1
+    }
+
+    const finalSum = treeParentNode.children
+        .reduce((totalSum, sibling) => {
+            const alreadyAddednephew = sibling.children
+            console.log("''''''''''''BEGIN'''''''''''''")
+            console.log("sibling", sibling)
+            console.log("already added nephew", alreadyAddednephew)
+            if (!alreadyAddednephew) return totalSum
+
+            const currentnephew = alreadyAddednephew.filter((nephew) => nephew.name === currentName)
+            console.log("current nephew array", currentnephew)
+            if (!currentnephew || currentnephew.length !== 1) return totalSum
+            console.log("current nephew entry", currentnephew[0])
+            console.log("nephew finalsum", currentnephew[0].finalSum)
+            console.log("''''''''''''END'''''''''''''")
+            return totalSum + currentnephew[0].finalSum
+        }, 0)
+    console.log("Name", currentName, "currentsupport:", currentSibling.support, "finalsum:", finalSum)
+    return finalSum
+}*/
+
+// For a node to already have been included in the calling Node, all elements in the path to the 
+// calling node have to be on the currentPath
+const getSumOfAlreadyExistingNodes = (treeNode, namesStillToPass) => {
+    console.log("names still to pass", namesStillToPass)
+    console.log("treenode", treeNode)
+    const index = namesStillToPass.indexOf(treeNode.name)
+    console.log("index of treenode name", treeNode.name, "in array", namesStillToPass, "is", index)
+    if (index > -1) {
+        namesStillToPass.splice(index, 1)
+        console.log("arr after slice:", namesStillToPass)
+        if (namesStillToPass.length === 0) {
+            console.log("using finalsum:", treeNode.finalSum)
+            return treeNode.finalSum
+        }
+    }
+    console.log("not yet ready with still to pass", namesStillToPass)
+    // namesStillToPass still gt 0
+    if (treeNode.children && treeNode.children.length > 0) {
+        return treeNode.children.reduce((totalSum, child) => {
+            const notPassedYet = [...namesStillToPass]
+            return totalSum + getSumOfAlreadyExistingNodes(child, notPassedYet)
+        }, 0)
+    } else {
+        return 0
+    }
+
+}
