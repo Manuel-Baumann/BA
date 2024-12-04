@@ -299,55 +299,6 @@ const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToPa
     individualSiblingsSorted.forEach((currentSibling) => {
         const currentName = currentSibling.elements[0]
         const currentPath = [...pathToParent, currentName]
-        // console.log("Current Name", currentName)
-
-        ///const currentSize = notUsedSiblingSupportMap.get(currentName) / treeParentNode.support * treeParentNode.size
-
-        // Get size of new node from siblingsData
-        /*const maxSiblingLength = siblingsData.reduce((max, sib) => Math.max(max, sib.elements.length), 0)
-        const setsWithAlreadyAddedAndCurrent = siblingsData.filter(({ elements }) => elements.includes(currentName))
-            .filter(({ elements }) => {
-                // Keep set if it was already used (to filter it out) or if it is the element alone
-                if (elements.length === 1) return true
-                let boolAlreadyAdded = false
-                alreadyAddedSiblings.forEach(aaS => {
-                    if (elements.includes(aaS)) boolAlreadyAdded = true
-                })
-                return boolAlreadyAdded
-            })
-        console.log("Siblingsdata", siblingsData, "setsWithAlreadyAddedAndCurrent", setsWithAlreadyAddedAndCurrent, "current:", currentName)
-        console.log("Parent: ", treeParentNode.name, "max sibling length:", maxSiblingLength)
-        console.log("Already done siblings: ", alreadyAddedSiblings, "Not yet added", notYetAddedSiblings)
-        // From the only set with len one: -> Inclusion-Exclusion Principle
-        // - substract sum of support of all sets with even len
-        // - add sum of support of all sets with odd len
-        const sumOfAllOddLengthedSets = setsWithAlreadyAddedAndCurrent.filter(({ elements }) => elements.length % 2 === 1).reduce((sum, sib) => sum + sib.support, 0)
-        const sumOfAllEvenLengthedSets = setsWithAlreadyAddedAndCurrent.filter(({ elements }) => elements.length % 2 === 0).reduce((sum, sib) => sum + sib.support, 0)
-        const finalSum = sumOfAllOddLengthedSets - sumOfAllEvenLengthedSets
-        if (finalSum < 0)
-            console.error("Final sum < 0:", finalSum, "sum of all odd lengthed sets", sumOfAllOddLengthedSets, "sum of all even lengthed sets", sumOfAllEvenLengthedSets,)
-        console.log("Final sum:", finalSum, "sum of all odd lengthed sets", sumOfAllOddLengthedSets, "sum of all even lengthed sets", sumOfAllEvenLengthedSets,)
-        */
-        // Already added children in parent tree must be checked for children that have the same name as the current Node
-        // Their left over support/finalSum is to be substracted from current support
-        /*console.log("parent children", treeParentNode.children)
-        const finalSum = currentSibling.support - treeParentNode.children
-            .reduce((totalSum, sibling) => {
-                const alreadyAddednephew = sibling.children
-                console.log("''''''''''''BEGIN'''''''''''''")
-                console.log("sibling", sibling)
-                console.log("already added nephew", alreadyAddednephew)
-                if (!alreadyAddednephew) return totalSum
-
-                const currentnephew = alreadyAddednephew.filter((nephew) => nephew.name === currentName)
-                console.log("current nephew array", currentnephew)
-                if (!currentnephew || currentnephew.length !== 1) return totalSum
-                console.log("current nephew entry", currentnephew[0])
-                console.log("nephew finalsum", currentnephew[0].finalSum)
-                console.log("''''''''''''END'''''''''''''")
-                return totalSum + currentnephew[0].finalSum
-            }, 0)
-        console.log("Name", currentName, "currentsupport:", currentSibling.support, "finalsum:", finalSum)*/
         console.log("currentpath", currentPath)
         const finalSum = currentSibling.support - getSumOfAlreadyExistingNodes(rootNode, [...currentPath])
         console.log(finalSum, currentSibling.support)
@@ -382,31 +333,6 @@ const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToPa
         // Leave out already added siblings
         notYetAddedSiblings = notYetAddedSiblings.filter((s) => s !== currentName)
         alreadyAddedSiblings.push(currentName)
-        /*for (const key of notYetAddedSiblings) {
-            // Find out how much support was used for key by currentName
-            //if (currentName === "1.0") console.log("not yet added:", notYetAddedSiblings, "newData", newData)
-            //const amountUsed = newData.filter(({ elements }) => elements.includes(key) && elements.length === 2).reduce((acc, { elements, support }) => acc + support, 0.0)
-            const amountUsed = siblingsData.filter(({ elements }) => elements.includes(key) && elements.length === 2)
-                .filter(({ elements }) => {
-                    let boolNotAlreadyAdded = true
-                    alreadyAddedSiblings.forEach(aaS => {
-                        if (elements.includes(aaS)) boolNotAlreadyAdded = false
-                    })
-                    return boolNotAlreadyAdded
-                })
-                .reduce((acc, { elements, support }) => acc + support, 0.0)
-            // Substract that amount in map
-
-            /////console.log("old: ", notUsedSiblingSupportMap.get(key), "used: ", amountUsed, "key", key, "on parent", treeParentNode.name)
-            const newValue = notUsedSiblingSupportMap.get(key) - amountUsed
-            //if (currentName === "1.0") console.log("Key: ", key, "amount used by current node", currentName, "is: ", amountUsed, "new value", newValue)
-            if (newValue < 0) console.error("ERROR! Some error occured when calculating support used by siblings.")
-            notUsedSiblingSupportMap.set(key, newValue)
-
-            /////for (const [k, v] of notUsedSiblingSupportMap) {
-            /////console.log("Current node: ", currentName, "current key: ", key, "not used sibling support map:", k, v)
-            /////}
-        }*/
     })
 };
 
@@ -427,32 +353,7 @@ const parseFrequentItemsetPatterns = (line) => {
         .map((e) => e.trim());
     return { elements, support };
 };
-/*
-const getSupportUsedByNephews = (parentNode, currentName, degreeOfRelationship) => {
-    while (degreeOfRelationship > 0) {
 
-        degreeOfRelationship -= 1
-    }
-
-    const finalSum = treeParentNode.children
-        .reduce((totalSum, sibling) => {
-            const alreadyAddednephew = sibling.children
-            console.log("''''''''''''BEGIN'''''''''''''")
-            console.log("sibling", sibling)
-            console.log("already added nephew", alreadyAddednephew)
-            if (!alreadyAddednephew) return totalSum
-
-            const currentnephew = alreadyAddednephew.filter((nephew) => nephew.name === currentName)
-            console.log("current nephew array", currentnephew)
-            if (!currentnephew || currentnephew.length !== 1) return totalSum
-            console.log("current nephew entry", currentnephew[0])
-            console.log("nephew finalsum", currentnephew[0].finalSum)
-            console.log("''''''''''''END'''''''''''''")
-            return totalSum + currentnephew[0].finalSum
-        }, 0)
-    console.log("Name", currentName, "currentsupport:", currentSibling.support, "finalsum:", finalSum)
-    return finalSum
-}*/
 
 // For a node to already have been included in the calling Node, all elements in the path to the 
 // calling node have to be on the currentPath
