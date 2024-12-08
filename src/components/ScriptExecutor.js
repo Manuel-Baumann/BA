@@ -273,6 +273,11 @@ const ScriptExecutor = () => {
         newMinSupValues[`column${columnIndex}`] = value;
         setMinSups(newMinSupValues);
     };
+    const handleMinConfChange = (value, columnIndex) => {
+        const newMinConfValues = { ...minConfs }
+        newMinConfValues[`column${columnIndex}`] = value
+        setMinConfs(newMinConfValues)
+    }
 
     return (
         <div className="container">
@@ -362,7 +367,7 @@ const ScriptExecutor = () => {
                             Use custom parameters for algorithm
                             <input type="checkbox" id="c1" name="c1" value="params1" checked={checkAlgoParams.column1} onChange={(event) => handleCheckboxChange(event, 1)} />
                         </label>
-                        {checkAlgoParams.column1 && selectedValues.at(-1) === 'Frequent Itemsets' ? <div className="slider-container">
+                        {checkAlgoParams.column1 ? <div className="slider-container">
                             <span className="info-icon">ℹ️
                                 <span className="tooltip-text"> Choose the minimum support for the frequent itemsets </span>
                             </span>
@@ -374,7 +379,19 @@ const ScriptExecutor = () => {
                                 value={minSups.column1}
                                 onChange={(value) => handleMinSupChange(value, 1)}
                             />
-                        </div> : null}
+                            {selectedValues.at(-1) === 'Association Rules' ? <div>
+                                <span className="info-icon">ℹ️
+                                    <span className="tooltip-text"> Choose the minimum confidence for the association rules </span>
+                                </span>
+                                <label>Minimum confidence: {minConfs.column1}%</label>
+                                <Slider
+                                    range
+                                    min={0}
+                                    max={100}
+                                    value={minConfs.column1}
+                                    onChange={(value) => handleMinConfChange(value, 1)}
+                                />
+                            </div> : null}</div> : null}
                     </div>
                     <button className="execute-button" onClick={() => executeScript(1)}>
                         Execute Algorithm
@@ -444,9 +461,9 @@ const ScriptExecutor = () => {
                             Use custom parameters for algorithm
                             <input type="checkbox" id="c2" name="c2" value="params2" checked={checkAlgoParams.column2} onChange={(event) => handleCheckboxChange(event, 2)} />
                         </label>
-                        {checkAlgoParams.column2 && selectedValues.at(-1) === 'Frequent Itemsets' ? <div className="slider-container">
+                        {checkAlgoParams.column2 ? <div className="slider-container">
                             <span className="info-icon">ℹ️
-                                <span className="tooltip-text">Choose the minimum support for the frequent itemsets</span>
+                                <span className="tooltip-text"> Choose the minimum support for the frequent itemsets </span>
                             </span>
                             <label>Minimum support: {minSups.column2}%</label>
                             <Slider
@@ -456,7 +473,19 @@ const ScriptExecutor = () => {
                                 value={minSups.column2}
                                 onChange={(value) => handleMinSupChange(value, 2)}
                             />
-                        </div> : null}
+                            {selectedValues.at(-1) === 'Association Rules' ? <div>
+                                <span className="info-icon">ℹ️
+                                    <span className="tooltip-text"> Choose the minimum confidence for the association rules </span>
+                                </span>
+                                <label>Minimum confidence: {minConfs.column2}%</label>
+                                <Slider
+                                    range
+                                    min={0}
+                                    max={100}
+                                    value={minConfs.column2}
+                                    onChange={(value) => handleMinConfChange(value, 2)}
+                                />
+                            </div> : null}</div> : null}
                     </div>
                     <button className="execute-button" onClick={() => executeScript(2)}>
                         Execute Algorithm

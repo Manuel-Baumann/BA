@@ -8,7 +8,8 @@ from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules as arule
 from mlxtend.frequent_patterns import fpmax
 from spmf import Spmf
-#from pycaret.datasets import get_data
+
+# from pycaret.datasets import get_data
 import datetime
 
 mandatory_courses_arr = [
@@ -368,6 +369,7 @@ def execute_script_func(
         semester_basis = not bool_year
         if bool_use_params_FE:
             min_sup = min_sup_FE
+            min_conf = min_conf_FE
         create_prefix_span_input_and_run(
             work, semester_basis, grade_bool, min_sup, 30, tmp, tmp2, tmp3
         )
