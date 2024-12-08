@@ -1,5 +1,6 @@
 // Sunburst.js
 import React, { useEffect, useRef, useState } from 'react';
+import { getHTML } from './helperFunctions';
 import * as d3 from 'd3';
 
 export const IcicleWithHover = ({ data }) => {
@@ -79,14 +80,10 @@ export const IcicleWithHover = ({ data }) => {
                 if (d.data.name && d.data.name !== 'undefined') {
                     setHoveredNode(d);
                     highlightPath(d);
+
                     d3.select(tooltipRef.current)
                         .style('opacity', 1)
-                        .html(`
-                            <strong>Name:</strong> ${d.data.name}<br/>
-                            <strong>Support:</strong> ${d.data.support}<br/>
-                            <strong>Remaining support:</strong> ${d.data.finalSum}<br/>
-                            <strong>Depth:</strong> ${d.depth}
-                            `);
+                        .html(getHTML(d.data.name, d.data.support, d.data.finalSum, d.depth));
                 } else {
                     setHoveredNode(null)
                     highlightPath();

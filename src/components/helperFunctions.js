@@ -114,7 +114,6 @@ function adjustSizeRecursively(node) {
     );
     if (!node.children || node.children.length === 0) {
         // Leaf node: no children to process
-        //console.log("no children", node.size)
         node.size = node.size ? parseFloat(node.size.toFixed(4)) : 0;
         return node.size;
     }
@@ -131,8 +130,6 @@ function adjustSizeRecursively(node) {
     } else {
         node.size = 0;
     }
-    // console.log("node", node.name, "support", node.size)
-    // console.log(parseFloat((node.size + childSupportSum).toFixed(4)))
     return parseFloat((node.size + childSupportSum).toFixed(4));
 }
 
@@ -158,9 +155,6 @@ export const buildIcicleHierarchy = (patterns) => {
         addToTreeIcicle(root, steps, support);
     });
 
-    //console.log(root)
-    //adjustSupportRecursively(root);
-    //console.log(root)
     return root;
 };
 
@@ -265,9 +259,8 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     addChildrenRecursively(root, parsedData, root, [])
     // Now every child should have correct size with sum of size of all children <= parentSize
     // Now adjust to be represented correctly by D3...
-    console.log("Adjust???")
-    console.log(root)
     adjustSizeRecursively(root);
+    console.log(root)
     return root;
 };
 
@@ -283,15 +276,6 @@ const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToPa
     const individualSiblingsSorted = siblingsData
         .filter(({ elements }) => elements.length === 1)
         .sort((a, b) => b.support - a.support);
-    // console.log("individualSiblingsSorted", individualSiblingsSorted, "with parent:", treeParentNode.name)
-    //Map used to capture the support already used by siblings
-    ///const notUsedSiblingSupportMap = new Map()
-    ///individualSiblingsSorted.forEach(({ elements, support }) => notUsedSiblingSupportMap.set(elements[0], support))
-    /////console.log("Create new sibling support map:")
-    /////for (const [k, v] of notUsedSiblingSupportMap) {
-    /////console.log("not used sibling support map:", k, v)
-    /////}
-    // Keeping track of already added and not yet added siblings
     let notYetAddedSiblings = individualSiblingsSorted.map(({ elements }) => elements[0])
     let alreadyAddedSiblings = []
 
@@ -309,8 +293,6 @@ const addChildrenRecursively = (rootNode, siblingsData, treeParentNode, pathToPa
             finalSum: finalSum//notUsedSiblingSupportMap.get(currentName)
         });
         // Siblings support was fully used up, since it was added to parent
-        /////console.log("USED: ", notUsedSiblingSupportMap.get(currentName), "name:", currentName, "Current siblings:", individualSiblingsSorted.map(s => [s.elements[0], s.support]), "current Parent", treeParentNode.name)
-        ///notUsedSiblingSupportMap.set(currentName, 0)
 
         // Add children of biggest child by calling this function on all filtered itemsets that 
         // contained the current Nodes name
@@ -357,19 +339,13 @@ const parseFrequentItemsetPatterns = (line) => {
 // For a node to already have been included in the calling Node, all elements in the path to the 
 // calling node have to be on the currentPath
 const getSumOfAlreadyExistingNodes = (treeNode, namesStillToPass) => {
-    console.log("names still to pass", namesStillToPass)
-    console.log("treenode", treeNode)
     const index = namesStillToPass.indexOf(treeNode.name)
-    console.log("index of treenode name", treeNode.name, "in array", namesStillToPass, "is", index)
     if (index > -1) {
         namesStillToPass.splice(index, 1)
-        console.log("arr after slice:", namesStillToPass)
         if (namesStillToPass.length === 0) {
-            console.log("using finalsum:", treeNode.finalSum)
             return treeNode.finalSum
         }
     }
-    console.log("not yet ready with still to pass", namesStillToPass)
     // namesStillToPass still gt 0
     if (treeNode.children && treeNode.children.length > 0) {
         return treeNode.children.reduce((totalSum, child) => {
@@ -380,4 +356,11 @@ const getSumOfAlreadyExistingNodes = (treeNode, namesStillToPass) => {
         return 0
     }
 
+}
+
+export const getHTML = (nodeName, size, remainingSize, depth) => {
+    let html = `<strong>Name:</strong> ${nodeName}<br/>
+                <strong>Support:</strong> ${size.toFixed(4)}<br/>`
+    if (remainingSize && remainingSize > 0) html = html + `<strong>Remaining support:</strong> ${remainingSize.toFixed(4)}<br/>`
+    return html + `<strong>Depth:</strong> ${depth}`
 }
