@@ -90,7 +90,7 @@ tmp = "./Results/tmp.txt"
 tmp2 = "./Results/tmp2.txt"
 tmp3 = "./Results/tmp3.txt"
 not_passed_prefix = "(Not passed) "
-seq_patt_spmf_algo_name = ""
+algo_name = ""
 min_sup_FE = 200
 min_conf_FE = 200
 bool_use_params = False
@@ -122,13 +122,24 @@ def execute_script_func(
     if TRUNCATE_OUTPUT == 200:
         TRUNCATE_OUTPUT = 30000
 
-    global seq_patt_spmf_algo_name
-    if normal_closed_maximal == 0:
-        seq_patt_spmf_algo_name = "PrefixSpan"
-    elif normal_closed_maximal == 1:
-        seq_patt_spmf_algo_name = "ClaSP"
-    elif normal_closed_maximal == 2:
-        seq_patt_spmf_algo_name = "MaxSP"
+    global algo_name
+    if sets_rules_patterns == 1:
+        if normal_closed_maximal == 0:
+            algo_name = "FPGrowth_association_rules"
+        elif normal_closed_maximal == 1:
+            algo_name = "Closed_association_rules"
+        elif normal_closed_maximal == 2:
+            print(
+                '"""POSTPROCESSING"""Calculating minimal non-redundant association rules.'
+            )
+            algo_name = "MNR"
+    elif sets_rules_patterns == 2:
+        if normal_closed_maximal == 0:
+            algo_name = "PrefixSpan"
+        elif normal_closed_maximal == 1:
+            algo_name = "ClaSP"
+        elif normal_closed_maximal == 2:
+            algo_name = "MaxSP"
 
     global min_sup_FE
     global min_conf_FE
@@ -333,8 +344,9 @@ def execute_script_func(
         if bool_use_params_FE:
             min_sup = min_sup_FE
             min_conf = min_conf_FE
+        print('"""POSTPROCESSING""" Ass Rules algo:', algo_name)
         spmf = Spmf(
-            "FPGrowth_association_rules",
+            algo_name,
             input_filename=tmp,
             output_filename=tmp2,
             arguments=[min_sup, min_conf],
@@ -342,22 +354,24 @@ def execute_script_func(
         )
         spmf.run()
         decode_spmf_ass_rules(tmp2, tmp)
+        final_file = ""
         if not grade_bool:
             # Filter out rules with only mandatory courses
             print(
                 '"""POSTPROCESSING"""Rules that include only mandatory courses were filtered out.'
             )
             filter_only_mandatory_courses(tmp, tmp2)
-            sort_spmf_ass_rules(tmp2)
+            final_file = tmp2
         else:
-            # Grades
-            # arguments: minsup, max sequence length
-            sort_spmf_ass_rules(tmp)
-        make_support_relative(tmp, work["subjectId"].nunique())
+            final_file = tmp
+        sort_spmf_ass_rules(final_file)
+
+        make_support_relative(final_file, work["subjectId"].nunique())
         print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
-        remove_grade_zero(tmp)
+        remove_grade_zero(final_file)
         print("OUTPUT: ASSOCIATION RULES")
-        print_output(tmp)
+
+        print_output(final_file)
     ################################## End: Association Rules ##################################
     ################################## Sequential Patterns ##################################
     if sets_rules_patterns == 2:
@@ -489,9 +503,7 @@ def sort_spmf_ass_rules(output):
                 supports.append([line.split()[-1], index])
                 lines.append(line)
                 index += 1
-
     supports = sorted(supports, key=lambda x: x[0], reverse=True)
-
     with open(output, "w", newline="", encoding="utf-8") as g:
         for i in range(len(lines)):
             g.write(lines[supports[i][1]])
@@ -566,12 +578,12 @@ def decode_prefix_span_output(input_path, readable_output_path):
 def run_prefix_span(input, output, min_support, max_len, readable_output_path):
     # arguments: minsup, max sequence length
     algo_args = []
-    if seq_patt_spmf_algo_name == "PrefixSpan":
+    if algo_name == "PrefixSpan":
         algo_args = [min_support, max_len]
     else:
         algo_args = [min_support]
     spmf = Spmf(
-        seq_patt_spmf_algo_name,
+        algo_name,
         input_filename=input,
         output_filename=output,
         arguments=algo_args,
