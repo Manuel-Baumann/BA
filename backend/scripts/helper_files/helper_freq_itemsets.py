@@ -2,13 +2,7 @@ from spmf import Spmf  # type: ignore
 import pandas as pd  # type: ignore
 from mlxtend.frequent_patterns import fpmax  # type: ignore
 from mlxtend.frequent_patterns import apriori  # type: ignore
-
-
-tmp = "./Results/tmp.txt"
-tmp2 = "./Results/tmp2.txt"
-tmp3 = "./Results/tmp3.txt"
-tmp4 = "./Results/tmp4.txt"
-tmp5 = "./Results/tmp4.txt"
+from .definitions import tmp, tmp2, tmp4
 
 
 def execute_freq_itemset_algorithm(
