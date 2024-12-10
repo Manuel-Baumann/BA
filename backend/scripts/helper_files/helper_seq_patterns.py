@@ -1,7 +1,7 @@
 from spmf import Spmf
 
 
-def sort_spmf_prefix_span_output(readable_output_path):
+def sort_spmf_seq_pat_algo_output(readable_output_path):
     lines = []
     supports = []
     index = 0
@@ -18,7 +18,7 @@ def sort_spmf_prefix_span_output(readable_output_path):
             g.write(lines[supports[i][1]])
 
 
-def decode_prefix_span_output(input_path, readable_output_path, all_distinct_courses):
+def decode_seq_pat_algo_output(input_path, readable_output_path, all_distinct_courses):
     with open(input_path, "r", newline="", encoding="utf-8") as f:
         with open(readable_output_path, "w", newline="", encoding="utf-8") as g:
             for line in f:
@@ -43,7 +43,7 @@ def decode_prefix_span_output(input_path, readable_output_path, all_distinct_cou
                 g.write("\n")
 
 
-def run_prefix_span(input, output, min_support, max_len, algo_name):
+def run_spmf_seq_pat_algo(input, output, min_support, max_len, algo_name):
     # arguments: minsup, max sequence length
     algo_args = []
     if algo_name == "PrefixSpan":
@@ -62,9 +62,7 @@ def run_prefix_span(input, output, min_support, max_len, algo_name):
     # spmf.to_csv("./Data/Results/output_spmf_prefixSpan.csv")
 
 
-def create_prefix_span_input(
-    df, semester_basis, grade_bool, file_path, all_distinct_courses
-):
+def create_seq_pat_algo_input(df, grade_bool, file_path, all_distinct_courses):
     # Create list in which: array[i] corresponds to subject with subjectId = i + 1
     #               [
     #                    [[semester, [courses_semester]], [semester, [courses_semester]], , , , , , ],
@@ -74,16 +72,17 @@ def create_prefix_span_input(
     subjects = []
     for i in range(5395):  # max value for subjectId is 5395
         subjects.append([])
+
+    str_grade_course = ""
+    if grade_bool:
+        str_grade_course = "grade"
+    else:
+        str_grade_course = "course"
+
     for index, row in df.iterrows():
-        if semester_basis:
-            semester = int(row["semester"])
-        else:
-            semester = int(row["term"])
+        semester = int(row["semester"])
         subject_id = int(row["subjectId"])
-        if grade_bool:
-            course = row["grade"]
-        else:
-            course = row["course"]
+        course = row[str_grade_course]
         semesters = subjects[subject_id - 1]
 
         flag_already_exists = False

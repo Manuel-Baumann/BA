@@ -117,12 +117,15 @@ def create_input_file(work, file, grade_bool, all_distinct_courses):
     for i in range(5395):  # max value for subjectId is 5395
         subjects.append([])
 
+    str_grade_course = ""
+    if grade_bool:
+        str_grade_course = "grade"
+    else:
+        str_grade_course = "course"
+
     for index, row in work.iterrows():
         subject_id = int(row["subjectId"])
-        if grade_bool:
-            course = row["grade"]
-        else:
-            course = row["course"]
+        course = row[str_grade_course]
         semesters = subjects[subject_id - 1]
         if course not in semesters:
             subjects[subject_id - 1].append(course)

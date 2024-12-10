@@ -1,17 +1,21 @@
 from spmf import Spmf
 
+MAX_VALUE_OF_SUBJECT_ID = 5395
+
 
 def create_spmf_ass_rules_input(df, tmp, grade_bool, all_distinct_courses):
     subjects = []
-    for i in range(5395):  # max value for subjectId is 5395
+    for i in range(MAX_VALUE_OF_SUBJECT_ID):
         subjects.append([])
+    str_grade_course = ""
+    if grade_bool:
+        str_grade_course = "grade"
+    else:
+        str_grade_course = "course"
 
     for index, row in df.iterrows():
         subject_id = int(row["subjectId"])
-        if grade_bool:
-            course = row["grade"]
-        else:
-            course = row["course"]
+        course = row[str_grade_course]
         semesters = subjects[subject_id - 1]
         if course not in semesters:
             subjects[subject_id - 1].append(course)

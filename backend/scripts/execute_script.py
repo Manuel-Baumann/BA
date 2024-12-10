@@ -11,10 +11,10 @@ from helper_files.helper_preproc import (
     create_all_distinct_courses_from_df,
 )
 from helper_files.helper_seq_patterns import (
-    create_prefix_span_input,
-    decode_prefix_span_output,
-    run_prefix_span,
-    sort_spmf_prefix_span_output,
+    create_seq_pat_algo_input,
+    decode_seq_pat_algo_output,
+    run_spmf_seq_pat_algo,
+    sort_spmf_seq_pat_algo_output,
 )
 from helper_files.helper_ass_rules import (
     create_spmf_ass_rules_input,
@@ -50,7 +50,7 @@ from helper_files.definitions import (
 all_distinct_courses = []
 TRUNCATE_OUTPUT = 100  # Lines of output that will be shown / vizualized
 
-bins_bool = True
+bins_bool = False
 work_renamed = "./csv/work_renamed.csv"
 algo_name = ""
 global_min_sup = 200
@@ -164,11 +164,9 @@ def execute_script_func(
         bool_matr1 = pd.DataFrame(bool_matr1, columns=te1.columns_)
 
         ### Find frequent course/grade combinations within one semester/year ###
-        sem_year = "semester"
-        if fe_bool_year:
-            sem_year = "year"
+        # Column semester is already updated depending on fe_bool_year
         student_courses_df = pd.DataFrame(
-            work.groupby("semester")[str_course_grade].unique()
+            work.groupby(["subjectId", "semester"])[str_course_grade].unique()
         )
         te2 = TransactionEncoder()
         bool_matr2 = te2.fit(student_courses_df[str_course_grade]).transform(
@@ -193,7 +191,11 @@ def execute_script_func(
         )
         print("OUTPUT: FREQUENT ITEMSETS")
         print_output(tmp, TRUNCATE_OUTPUT)
-        """print(
+        """
+        sem_year = "semester"
+        if fe_bool_year:
+            sem_year = "year"
+        print(
             f"OUTPUT: FREQUENT {str_course_grade.upper()} combinations within one {sem_year.upper()}"
         )
         print_output(tmp2, TRUNCATE_OUTPUT)"""
@@ -230,13 +232,10 @@ def execute_script_func(
     ################################## End: Association Rules ##################################
     ################################## Sequential Patterns ##################################
     if fe_sets_rules_patterns == 2:
-        semester_basis = not fe_bool_year
-        create_prefix_span_input(
-            work, semester_basis, grade_bool, tmp3, all_distinct_courses
-        )
-        run_prefix_span(tmp3, tmp2, global_min_sup, 30, algo_name)
-        decode_prefix_span_output(tmp2, tmp, all_distinct_courses)
-        sort_spmf_prefix_span_output(tmp)
+        create_seq_pat_algo_input(work, grade_bool, tmp3, all_distinct_courses)
+        run_spmf_seq_pat_algo(tmp3, tmp2, global_min_sup, 30, algo_name)
+        decode_seq_pat_algo_output(tmp2, tmp, all_distinct_courses)
+        sort_spmf_seq_pat_algo_output(tmp)
         make_support_relative(tmp, work["subjectId"].nunique())
         if grade_bool:
             print(
@@ -246,8 +245,3 @@ def execute_script_func(
         print("OUTPUT: SEQUENTIAL PATTERNS")
         print_output(tmp, TRUNCATE_OUTPUT)
     print('"""POSTPROCESSING"""Script finished successfully: ', datetime.datetime.now())
-
-
-############################################################################
-#########################   Helper functions    ############################
-############################################################################

@@ -85,9 +85,7 @@ def preprocess_csv(
     print("Unique students in dataset:", mean_range["subjectId"].nunique())
 
     if fe_bool_year:
-        # Years basis: rename column term
-        # Semester bases: leave as is
-        work["term"] = work["term"].apply(rename_term)
+        work["semester"] = work["semester"].apply(rename_semester_to_year)
 
     # Filter for mean grade range
     work = pd.DataFrame((work[work["subjectId"].isin(mean_range["subjectId"])]))
@@ -105,13 +103,12 @@ def preprocess_csv(
     return work
 
 
-# Create years basis
-def rename_term(entry):
-    entry = str(entry)
-    term_year = int(entry[:4])
-    if len(entry) >= 5 and entry[4] == "S":
-        term_year -= 1
-    return term_year
+# Even semesters correspond to summer -> substract one from even to make years
+def rename_semester_to_year(entry):
+    entry = int(entry)
+    if entry % 2 == 0:
+        return entry - 1
+    return entry
 
 
 # Function to add Prefix (not passed)
