@@ -46,10 +46,12 @@ def decode_spmf_ass_rules(input_path, output_path, all_distinct_courses):
                             g.write(words[i + j] + " ")
                         break
                     elif words[i].isnumeric():
-                        g.write(str(all_distinct_courses[int(words[i])]) + " ")
+                        last = " "
+                        if words[i + 1].isnumeric():
+                            last = " || "
+                        g.write(str(all_distinct_courses[int(words[i])]) + last)
                     else:
                         g.write(words[i] + " ")
-
                 g.write("\n")
 
 

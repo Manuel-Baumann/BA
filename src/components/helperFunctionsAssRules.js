@@ -1,7 +1,7 @@
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
 // // // // // // // // // // // //    Association rules    // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-function addToAssRulesTreeIcicle(tree, steps, support) {
+function addToAssRulesTreeIcicle(tree, steps, support, confidence) {
     let currentNode = tree;
 
     // For each step in the sequence
@@ -17,7 +17,8 @@ function addToAssRulesTreeIcicle(tree, steps, support) {
                 name: step,
                 children: [],
                 size: index === steps.length - 1 ? support : 0,
-                support: index === steps.length - 1 ? support : 0
+                support: index === steps.length - 1 ? support : 0,
+                confidence: index === steps.length - 1 ? confidence : 0
             };
             currentNode.children.push(childNode);
         } else {
@@ -44,18 +45,22 @@ export const buildAssRulesIcicleHierarchy = (patterns) => {
     const root = { name: "", children: [] };
     // Process each pattern, parse it, and add it to the tree
     let parsedData = patterns.map((item) => {
-        const [patternStr, support] = item.split("#SUP:");
-        const steps = patternStr.split("=>").map((step) => step.trim());
-        return {
-            steps,
-            support: parseFloat(support.trim()),
-        };
+        const match = item.match(/(.+?)\s+#SUP:\s+([\d.]+)\s+#CONF:\s+([\d.]+)/)
+        if (match) {
+            const [_, patternStr, support, confidence] = match;
+            const steps = patternStr.split("=>").map((step) => step.trim());
+            return {
+                steps,
+                support: parseFloat(support.trim()),
+                confidence: parseFloat(confidence.trim()),
+            };
+        }
     });
     parsedData.sort((a, b) => a.steps.length - b.steps.length); // Sort by step count
 
     // Add sorted patterns to the tree
-    parsedData.forEach(({ steps, support }) => {
-        addToAssRulesTreeIcicle(root, steps, support);
+    parsedData.forEach(({ steps, support, confidence }) => {
+        addToAssRulesTreeIcicle(root, steps, support, confidence);
     });
 
     return root;

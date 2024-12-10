@@ -72,6 +72,15 @@ const radioGroupColumnData = [
     },
 ]
 const infoMinMax = "Students will be sorted by their mean grade. Only those within the range (in %) will be considered."
+const checkBoxGroupColumnData = [
+    "BA passed",
+    "BA not passed",
+    "MA passed",
+    "MA not passed",
+    "Started in winter",
+    "Started in summer"
+]
+
 
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
@@ -112,13 +121,23 @@ const ScriptExecutor = () => {
         column1: 0,
         column2: 0
     })
-
+    const [selectedCheckboxColumnValues, setSelectedCheckboxColumnValues] = useState({
+        column1: checkBoxGroupColumnData.reduce((acc, option) => {
+            acc[option] = true;
+            return acc;
+        }, {}),
+        column2: checkBoxGroupColumnData.reduce((acc, option) => {
+            acc[option] = true;
+            return acc;
+        }, {}),
+    });
 
 
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
+        const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
         try {
@@ -134,7 +153,8 @@ const ScriptExecutor = () => {
                     toBeUsed: checkAlgoParams[`column${columnIndex}`],
                     minSup: minSups[`column${columnIndex}`] !== 0 ? minSups[`column${columnIndex}`][0] : 0,
                     minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
-                }
+                },
+                checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k])
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -211,14 +231,28 @@ const ScriptExecutor = () => {
             setCompareOutputVisible(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
-            if (columnIndex === 1) {
-                setOutput1(errorMessage);
-                setData1(buildIcicleHierarchySeqPats([]))
-                setPostProcOutput1('');
+            if (error.message === "Empty dataset!") {
+                if (columnIndex === 1) {
+                    setPreOutput1(response.data.output)
+                    setOutput1(errorMessage);
+                    setData1(buildIcicleHierarchySeqPats([]))
+                    setPostProcOutput1('');
+                } else {
+                    setPreOutput2(response.data.output)
+                    setOutput2(errorMessage);
+                    setData2(buildIcicleHierarchySeqPats([]))
+                    setPostProcOutput2('');
+                }
             } else {
-                setOutput2(errorMessage);
-                setData2(buildIcicleHierarchySeqPats([]))
-                setPostProcOutput2('');
+                if (columnIndex === 1) {
+                    setOutput1(errorMessage);
+                    setData1(buildIcicleHierarchySeqPats([]))
+                    setPostProcOutput1('');
+                } else {
+                    setOutput2(errorMessage);
+                    setData2(buildIcicleHierarchySeqPats([]))
+                    setPostProcOutput2('');
+                }
             }
         }
     };
@@ -268,6 +302,16 @@ const ScriptExecutor = () => {
         newMinConfValues[`column${columnIndex}`] = value
         setMinConfs(newMinConfValues)
     }
+    const handleCheckboxColumnValueChange = (event, columnIndex) => {
+        const { name, checked } = event.target;
+        setSelectedCheckboxColumnValues((prev) => ({
+            ...prev,
+            [`column${columnIndex}`]: {
+                ...prev[`column${columnIndex}`],
+                [name]: checked,
+            },
+        }));
+    };
 
     return (
         <div className="container">
@@ -335,7 +379,19 @@ const ScriptExecutor = () => {
                             ))}
                         </div>
                     ))}
-
+                    {checkBoxGroupColumnData.map((item) => (
+                        <div key={item}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name={item}
+                                    checked={selectedCheckboxColumnValues.column1[item]}
+                                    onChange={(e) => handleCheckboxColumnValueChange(e, 1)}
+                                />
+                                {item}
+                            </label>
+                        </div>
+                    ))}
                     {/* Slider for Column 1 */}
                     <div className="slider-container">
                         <span className="info-icon">ℹ️
@@ -429,7 +485,19 @@ const ScriptExecutor = () => {
                             ))}
                         </div>
                     ))}
-
+                    {checkBoxGroupColumnData.map((item) => (
+                        <div key={item}>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name={item}
+                                    checked={selectedCheckboxColumnValues.column2[item]}
+                                    onChange={(e) => handleCheckboxColumnValueChange(e, 2)}
+                                />
+                                {item}
+                            </label>
+                        </div>
+                    ))}
                     {/* Slider for Column 2 */}
                     <div className="slider-container">
                         <span className="info-icon">ℹ️

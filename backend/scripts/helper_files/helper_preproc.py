@@ -18,13 +18,9 @@ def preprocess_csv(
     fe_bool_year,
     fe_bool_passed_courses,
     fe_column_values,
+    fe_checkbox_data,
 ):
     work = pd.read_csv(csv)
-    if bins_bool:
-        if fe_bool_courses:
-            work["course"] = work["course"].replace(aggregate_courses)
-        else:
-            work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
 
     # Filter for column values
     if fe_column_values[0] != "All":
@@ -38,8 +34,14 @@ def preprocess_csv(
     if fe_column_values[4] != "All":
         work = work[work["subject"] == fe_column_values[4]]
 
+    if bins_bool:
+        if fe_bool_courses:
+            work["course"] = work["course"].replace(aggregate_courses)
+        else:
+            work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
+
+    # Only students who passed all courses at RWTH
     if not fe_bool_all_students:
-        # Only students who passed all courses at RWTH
         in_between_step = work[
             (work["grade"] <= 4.0) & (work["course"] in mandatory_courses_arr)
         ]
@@ -56,8 +58,15 @@ def preprocess_csv(
         # Only students who passed all mandatory courses at RWTH
         work = work[work["subjectId"].isin(included_ids)]
 
-    # Filtering out 0 credits
+    # Filtering out 0 credits that passed
     work = work[((work["credits"] != 0) | (work["state"] != "Bestanden"))]
+
+    # Filter for all checkboxes that are set: fe_checkbox_data
+    remaining_subjects = filter_for_checkboxes(work, fe_checkbox_data)
+    if len(remaining_subjects) == 0:
+        print("WARNING: Empty dataset after filtering for checkboxes!")
+        return
+    work = work[work["subjectId"].isin(remaining_subjects)]
 
     # Add prefix (not passed) to all courses that have not been passed
     if work.shape[0] > 0:
@@ -259,3 +268,42 @@ def create_numbers_to_names(
     with open(numbers_to_names_path, "w", newline="", encoding="utf-8") as file:
         for i in range(len(all_distinct_courses)):
             file.write(str(i) + " " + str(all_distinct_courses[i]) + "\n")
+
+
+def filter_for_checkboxes(work, checkbox_data):
+    # Uneven semesters are winter semesters
+    lowest_semesters = work.groupby("subjectId")["semester"].min().reset_index()
+    lowest_semesters.columns = ["subjectId", "lowest_semester"]
+    if ("Started in winter" not in checkbox_data) and (
+        "Started in summer" not in checkbox_data
+    ):
+        remaining_subjects = pd.Series([])
+    elif "Started in winter" not in checkbox_data:
+        remaining_subjects = lowest_semesters.loc[
+            lowest_semesters["lowest_semester"] % 2 == 0, "subjectId"
+        ]
+    elif "Started in summer" not in checkbox_data:
+        remaining_subjects = lowest_semesters.loc[
+            lowest_semesters["lowest_semester"] % 2 != 0, "subjectId"
+        ]
+    else:
+        remaining_subjects = lowest_semesters["subjectId"]
+    remaining_subjects = set(remaining_subjects)
+    # Filter out remaining not checked boxes
+    if ("BA passed" not in checkbox_data) or ("BA not passed" not in checkbox_data):
+        passed_bak = work.loc[
+            (work["course"] == "BAK") & (work["state"] == "Bestanden"), "subjectId"
+        ].unique()
+        if "BA passed" not in checkbox_data:
+            remaining_subjects = remaining_subjects - set(passed_bak)
+        if "BA not passed" not in checkbox_data:
+            remaining_subjects = remaining_subjects & set(passed_bak)
+    if ("MA passed" not in checkbox_data) or ("MA not passed" not in checkbox_data):
+        passed_msc = work.loc[
+            (work["course"] == "MSc") & (work["state"] == "Bestanden"), "subjectId"
+        ].unique()
+        if "MA passed" not in checkbox_data:
+            remaining_subjects = remaining_subjects - set(passed_msc)
+        if "MA not passed" not in checkbox_data:
+            remaining_subjects = remaining_subjects & set(passed_msc)
+    return remaining_subjects

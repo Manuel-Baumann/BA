@@ -95,7 +95,6 @@ const parseFrequentItemsetPatterns = (line) => {
     return { elements, support };
 };
 
-
 // For a node to already have been included in the calling Node, all elements in the path to the 
 // calling node have to be on the currentPath
 const getSumOfAlreadyExistingNodes = (treeNode, namesStillToPass) => {
@@ -117,7 +116,6 @@ const getSumOfAlreadyExistingNodes = (treeNode, namesStillToPass) => {
     }
 
 }
-
 
 // Function to adjust the size of parent nodes
 // BAD FUNCTION -> multiple children with high support go over the edge of parent node

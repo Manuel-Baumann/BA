@@ -82,7 +82,7 @@ export const IcicleWithHover = ({ data }) => {
 
                     d3.select(tooltipRef.current)
                         .style('opacity', 1)
-                        .html(getHTML(d.data.name, d.data.support, d.data.finalSum, d.depth));
+                        .html(getHTML(d.data.name, d.data.support, d.data.finalSum, d.depth, d.data.confidence));
                 } else {
                     setHoveredNode(null)
                     highlightPath();
@@ -181,9 +181,10 @@ export const IcicleWithHover = ({ data }) => {
     );
 };
 
-const getHTML = (nodeName, size, remainingSize, depth) => {
-    let html = `<strong>Name:</strong> ${nodeName}<br/>
-                <strong>Support:</strong> ${size.toFixed(4)}<br/>`
+const getHTML = (nodeName, size, remainingSize, depth, confidence) => {
+    let html = `<strong>Name:</strong> ${nodeName}<br/>`
+    if (size && size > 0) html = html + `<strong>Support:</strong> ${size.toFixed(4)}<br/>`
     if (remainingSize && remainingSize > 0) html = html + `<strong>Remaining support:</strong> ${remainingSize.toFixed(4)}<br/>`
+    if (confidence) html = html + `<strong>Confidence:</strong> ${confidence.toFixed(4)}<br/>`
     return html + `<strong>Depth:</strong> ${depth}`
 }

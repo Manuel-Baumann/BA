@@ -28,6 +28,7 @@ try:
     bool_use_params = os.getenv("BOOL_USE_PARAMS")
     min_sup = os.getenv("MIN_SUP")
     min_conf = os.getenv("MIN_CONF")
+    checkbox_data = os.getenv("CHECKBOX_DATA")
     # Example usage of the values
 
     #
@@ -79,6 +80,7 @@ try:
         bool_use_params,
         min_sup,
         min_conf,
+        checkbox_data,
     )
 
 except Exception as e:
