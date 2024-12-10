@@ -4,7 +4,9 @@ import Slider from 'rc-slider';
 import { IcicleWithHover } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
-import { buildIcicleHierarchy, buildFrequentItemsetHierarchy } from './helperFunctions';
+import { buildFrequentItemsetHierarchy } from './helperFunctionsFreqItemsets';
+import { buildAssRulesIcicleHierarchy } from './helperFunctionsAssRules';
+import { buildIcicleHierarchySeqPats } from './helperFunctionsSeqPatterns';
 
 // New data structure for dynamic radio button groups
 // values: [options1, options2, ...]
@@ -178,8 +180,6 @@ const ScriptExecutor = () => {
 
             // Set data for Graph
             let icicleData = {}
-            let secondIcicleData = {}
-            let secondOutput = ''
             const mainOutputSplitted = mainOutput.split('\n')
 
             // Only get output lines
@@ -187,18 +187,13 @@ const ScriptExecutor = () => {
             let onlyOutput = mainOutputSplitted.slice(index + 1).filter(line => line.trim() !== '')
             const preOutput = mainOutputSplitted.slice(0, index + 1).filter(line => line.trim() !== '')
 
-            //console.log(onlyOutput)
             // Fine tune data based on the algorithm that was selected
             if (selectedValues.at(-1) === 'Sequence Patterns') {
-                icicleData = buildIcicleHierarchy(onlyOutput);
+                icicleData = buildIcicleHierarchySeqPats(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
-                icicleData = buildIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
+                icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                //const indexSecond = onlyOutput.findIndex(line => line.startsWith("OUTPUT:"))
-                //secondOutput = onlyOutput.slice(indexSecond + 1)
-                //onlyOutput = onlyOutput.slice(0, indexSecond)
                 icicleData = buildFrequentItemsetHierarchy(onlyOutput)
-                //secondIcicleData = buildIcicleHierarchy(secondOutput)
             }
 
             // Set output in respective column
@@ -207,36 +202,22 @@ const ScriptExecutor = () => {
                 setPreOutput1(preOutput.join('\n'))
                 setOutput1(onlyOutput.join('\n'));
                 setData1(icicleData);
-                /*if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                    setSecondFreqItemsetData1(secondIcicleData)
-                    setSecondFreqItemsetOutput1(secondOutput.join('\n'));
-                } else {
-                    setSecondFreqItemsetData1({})
-                    setSecondFreqItemsetOutput1('');
-                }*/
             } else {
                 setPostProcOutput2(preprocOutput);
                 setPreOutput2(preOutput.join('\n'))
                 setOutput2(onlyOutput.join('\n'));
                 setData2(icicleData);
-                /*if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                    setSecondFreqItemsetData2(secondIcicleData)
-                    setSecondFreqItemsetOutput2(secondOutput.join('\n'));
-                } else {
-                    setSecondFreqItemsetData2({})
-                    setSecondFreqItemsetOutput2('');
-                }*/
             }
             setCompareOutputVisible(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
             if (columnIndex === 1) {
                 setOutput1(errorMessage);
-                setData1(buildIcicleHierarchy([]))
+                setData1(buildIcicleHierarchySeqPats([]))
                 setPostProcOutput1('');
             } else {
                 setOutput2(errorMessage);
-                setData2(buildIcicleHierarchy([]))
+                setData2(buildIcicleHierarchySeqPats([]))
                 setPostProcOutput2('');
             }
         }

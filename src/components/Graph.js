@@ -1,6 +1,5 @@
 // Sunburst.js
 import React, { useEffect, useRef, useState } from 'react';
-import { getHTML } from './helperFunctions';
 import * as d3 from 'd3';
 
 export const IcicleWithHover = ({ data }) => {
@@ -181,3 +180,10 @@ export const IcicleWithHover = ({ data }) => {
         </div>
     );
 };
+
+const getHTML = (nodeName, size, remainingSize, depth) => {
+    let html = `<strong>Name:</strong> ${nodeName}<br/>
+                <strong>Support:</strong> ${size.toFixed(4)}<br/>`
+    if (remainingSize && remainingSize > 0) html = html + `<strong>Remaining support:</strong> ${remainingSize.toFixed(4)}<br/>`
+    return html + `<strong>Depth:</strong> ${depth}`
+}
