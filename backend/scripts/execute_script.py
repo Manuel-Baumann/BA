@@ -50,7 +50,7 @@ from helper_files.definitions import (
 all_distinct_courses = []
 TRUNCATE_OUTPUT = 100  # Lines of output that will be shown / vizualized
 
-bins_bool = False
+bins_bool = True
 work_renamed = "./csv/work_renamed.csv"
 algo_name = ""
 global_min_sup = 200
@@ -129,6 +129,8 @@ def execute_script_func(
         print("Automatic minimum support:", global_min_sup)
         print("Automatic minimum confidence:", global_min_conf)
 
+    # Column values
+
     # renaming()
 
     ######################  Process input csv file  ############################
@@ -141,7 +143,11 @@ def execute_script_func(
         fe_slider_max,
         fe_bool_year,
         fe_bool_passed_courses,
+        fe_column_values,
     )
+    if work.shape[0] == 0:
+        print("WARNING: Empty dataset!")
+        return
 
     str_course_grade = "course"
     if not fe_bool_courses:
@@ -233,7 +239,7 @@ def execute_script_func(
     ################################## Sequential Patterns ##################################
     if fe_sets_rules_patterns == 2:
         create_seq_pat_algo_input(work, grade_bool, tmp3, all_distinct_courses)
-        run_spmf_seq_pat_algo(tmp3, tmp2, global_min_sup, 30, algo_name)
+        run_spmf_seq_pat_algo(tmp3, tmp2, global_min_sup, 100, algo_name)
         decode_seq_pat_algo_output(tmp2, tmp, all_distinct_courses)
         sort_spmf_seq_pat_algo_output(tmp)
         make_support_relative(tmp, work["subjectId"].nunique())

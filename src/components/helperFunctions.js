@@ -114,7 +114,6 @@ export const buildFrequentItemsetHierarchy = (patterns) => {
     // Now every child should have correct size with sum of size of all children <= parentSize
     // Now adjust to be represented correctly by D3...
     adjustSizeRecursively(root);
-    console.log(root)
     return root;
 };
 

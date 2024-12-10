@@ -44,25 +44,30 @@ const radioGroupData = [
 // columnValues: [options1, options2, ...]
 const radioGroupColumnData = [
     {
-        options: ['All', 'm', 'w', 'd'],
+        options: ['All', 'm', 'w', 'x'],
         info: '',
         header: 'Gender'
     },
     {
-        options: ['All', 'German'],
+        options: ['All', '1.0 (German?)', '3.0 (?)'],
         info: '',
         header: 'Nationality'
     },
     {
-        options: ['RWTH University'],
+        options: ['All', '0 (RWTH University?)'],
         info: '',
         header: 'University'
     },
     {
-        options: ['Computer Science'],
+        options: ['All', 'Bachelor of Science', 'Master of Science'],
         info: '',
         header: 'Degree'
-    }
+    },
+    {
+        options: ['All', 'Informatik'],
+        info: '',
+        header: 'Subject'
+    },
 ]
 const infoMinMax = "Students will be sorted by their mean grade. Only those within the range (in %) will be considered."
 
@@ -142,7 +147,6 @@ const ScriptExecutor = () => {
         try {
             let responseLines = response.data.output.split('\n');
             // Remove automatically generated output by spmf algorithm
-
             let i = 0;
             let first = 0;
             let last = 0;
@@ -158,6 +162,9 @@ const ScriptExecutor = () => {
                 // Leave in important information
                 if (responseLines[i].startsWith(' Number of association rules ') || responseLines[i].startsWith(' Pattern count')) {
                     leaveIn = i;
+                }
+                if (responseLines[i].startsWith('WARNING')) {
+                    throw new Error("Empty dataset!")
                 }
                 i++;
             }
@@ -225,9 +232,11 @@ const ScriptExecutor = () => {
             const errorMessage = `Error while visualizing data: ${error.message}`
             if (columnIndex === 1) {
                 setOutput1(errorMessage);
+                setData1(buildIcicleHierarchy([]))
                 setPostProcOutput1('');
             } else {
                 setOutput2(errorMessage);
+                setData2(buildIcicleHierarchy([]))
                 setPostProcOutput2('');
             }
         }

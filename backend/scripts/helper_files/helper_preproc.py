@@ -1,10 +1,10 @@
 import pandas as pd
 import csv
-
 from .definitions import (
     aggregate_grades,
     aggregate_courses,
     not_passed_prefix,
+    mandatory_courses_arr,
 )
 
 
@@ -17,6 +17,7 @@ def preprocess_csv(
     fe_slider_max,
     fe_bool_year,
     fe_bool_passed_courses,
+    fe_column_values,
 ):
     work = pd.read_csv(csv)
     if bins_bool:
@@ -25,30 +26,22 @@ def preprocess_csv(
         else:
             work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
 
+    # Filter for column values
+    if fe_column_values[0] != "All":
+        work = work[work["gender"] == fe_column_values[0]]
+    if fe_column_values[1] != "All":
+        work = work[work["nationality"] == float(fe_column_values[1].split()[0])]
+    if fe_column_values[2] != "All":
+        work = work[work["universityId"] == float(fe_column_values[2].split()[0])]
+    if fe_column_values[3] != "All":
+        work = work[work["degree"] == fe_column_values[3]]
+    if fe_column_values[4] != "All":
+        work = work[work["subject"] == fe_column_values[4]]
+
     if not fe_bool_all_students:
         # Only students who passed all courses at RWTH
         in_between_step = work[
-            (work["grade"] <= 4.0)
-            & (
-                (work["course"] == "BAK")
-                | (work["course"] == "FSAP")
-                | (work["course"] == "LA")
-                | (work["course"] == "AfI")
-                | (work["course"] == "BuS")
-                | (work["course"] == "BuK")
-                | (work["course"] == "TI")
-                | (work["course"] == "DS")
-                | (work["course"] == "M")
-                | (work["course"] == "DS")
-                | (work["course"] == "P")
-                | (work["course"] == "DSA")
-                | (work["course"] == "MaLo")
-                | (work["course"] == "ST")
-                | (work["course"] == "DKS")
-                | (work["course"] == "DBIS")
-                | (work["course"] == "PSP")
-                | (work["course"] == "ProS")
-            )
+            (work["grade"] <= 4.0) & (work["course"] in mandatory_courses_arr)
         ]
         courses_count = in_between_step["subjectId"].value_counts()
         students_with_high_counts = courses_count[courses_count >= 18].index
@@ -67,7 +60,8 @@ def preprocess_csv(
     work = work[((work["credits"] != 0) | (work["state"] != "Bestanden"))]
 
     # Add prefix (not passed) to all courses that have not been passed
-    work["course"] = work.apply(rename_course, axis=1)
+    if work.shape[0] > 0:
+        work["course"] = work.apply(rename_course, axis=1)
 
     # Extract means scores
     mean_scores = work.groupby("subjectId")["grade"].mean().reset_index()
@@ -94,10 +88,11 @@ def preprocess_csv(
         work = work[work["state"] != "Bestanden"]
 
     print("Number of courses:", work.shape[0])
-    print(
-        "Mean number of courses taken by a student:",
-        work.shape[0] / mean_range["subjectId"].nunique(),
-    )
+    if mean_range["subjectId"].nunique() > 0:
+        print(
+            "Mean number of courses taken by a student:",
+            work.shape[0] / mean_range["subjectId"].nunique(),
+        )
     print("Mean grade of mean grade of all students:", mean_range["mean_score"].mean())
 
     return work
