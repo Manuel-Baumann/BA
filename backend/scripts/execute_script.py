@@ -50,7 +50,7 @@ from helper_files.definitions import (
 all_distinct_courses = []
 TRUNCATE_OUTPUT = 100  # Lines of output that will be shown / vizualized
 
-bins_bool = True
+bins_bool = False
 work_renamed = "./csv/work_renamed.csv"
 algo_name = ""
 global_min_sup = 200
