@@ -2,7 +2,7 @@ from spmf import Spmf  # type: ignore
 import pandas as pd  # type: ignore
 from mlxtend.frequent_patterns import fpmax  # type: ignore
 from mlxtend.frequent_patterns import apriori  # type: ignore
-from .definitions import tmp, tmp2, tmp4
+from .definitions import tmp, tmp2, tmp4, MAX_VALUE_OF_SUBJECT_ID
 
 
 def execute_freq_itemset_algorithm(
@@ -11,19 +11,22 @@ def execute_freq_itemset_algorithm(
     bool_courses,
     mandatory_courses_arr,
     min_sup,
-    bool_matr1,
-    bool_matr2,
+    bool_matr,
     df_to_file_function,
     grade_bool,
     all_distinct_courses,
+    semesters_basis_bool,
+    remove_all_mand_fi_bool,
 ):
     frequent_itemset = None
     # Run the algorithm
     if normal_closed_maximal == 1:
-        create_input_file(work, tmp2, grade_bool, all_distinct_courses)
+        relative_support_divisor = create_input_file(
+            work, tmp2, grade_bool, all_distinct_courses, semesters_basis_bool
+        )
         execute_closed_freq_itemset_algorithm(
             min_sup,
-            work["subjectId"].nunique(),
+            relative_support_divisor,  # work["subjectId"].nunique(),
             tmp2,
             tmp,
             all_distinct_courses,
@@ -32,14 +35,14 @@ def execute_freq_itemset_algorithm(
     else:
         if normal_closed_maximal == 0:
             frequent_itemset = apriori(
-                bool_matr1, min_support=min_sup, use_colnames=True
+                bool_matr, min_support=min_sup, use_colnames=True
             )
 
         elif normal_closed_maximal == 2:
-            frequent_itemset = fpmax(bool_matr1, min_support=min_sup, use_colnames=True)
+            frequent_itemset = fpmax(bool_matr, min_support=min_sup, use_colnames=True)
 
         # print("Number of rules before filtering:", frequent_itemset.shape[0])
-        if bool_courses and normal_closed_maximal == 0:
+        if bool_courses and normal_closed_maximal == 0 and remove_all_mand_fi_bool:
             print(
                 '"""POSTPROCESSING"""Only frequent itemsets, that don\'t include any mandatory courses are shown.'
             )
@@ -57,7 +60,11 @@ def execute_freq_itemset_algorithm(
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
             ]
+        if frequent_itemset.shape[0] == 0:
+            print("WARNING: No frequent itemsets with given minimum support found.")
+            return
         frequent_itemset = frequent_itemset.sort_values(by="support", ascending=False)
+
         print(
             "Number of frequent itemsets:",
             frequent_itemset.shape[0],
@@ -88,59 +95,62 @@ def execute_freq_itemset_algorithm(
 
         # Print df to output file, so that it can be visualized
         df_to_file_function(frequent_itemset, tmp2)
-        """
-            ###
-            ### Second algorithm: Find frequent course/grade combinations within one semester/year ###
-            ###
-
-            # Run the second algorithm
-            if normal_closed_maximal == 0:
-                frequent_itemset = apriori(bool_matr2, min_support=min_sup, use_colnames=True)
-            elif normal_closed_maximal == 1:
-                create_second_input_file(work, tmp3, grade_bool, all_distinct_courses)
-                execute_closed_freq_itemset_algorithm(
-                    min_sup,
-                    work["subjectId"].nunique(),
-                    tmp3,
-                    tmp2,
-                    all_distinct_courses,
-                    grade_bool,
-                )
-                return
-            elif normal_closed_maximal == 2:
-                frequent_itemset = fpmax(bool_matr2, min_support=min_sup, use_colnames=True)
-        """
 
 
-def create_input_file(work, file, grade_bool, all_distinct_courses):
+def create_input_file(df, file, grade_bool, all_distinct_courses, semesters_basis_bool):
     subjects = []
-    for i in range(5395):  # max value for subjectId is 5395
+    for i in range(MAX_VALUE_OF_SUBJECT_ID):
         subjects.append([])
-
     str_grade_course = ""
     if grade_bool:
         str_grade_course = "grade"
     else:
         str_grade_course = "course"
 
-    for index, row in work.iterrows():
+    for index, row in df.iterrows():
         subject_id = int(row["subjectId"])
         course = row[str_grade_course]
         semesters = subjects[subject_id - 1]
-        if course not in semesters:
-            subjects[subject_id - 1].append(course)
+
+        if semesters_basis_bool:
+            semester = int(row["semester"])
+            flag_already_exists = False
+            for i in range(len(semesters)):
+                if semesters[i][0] == semester:
+                    flag_already_exists = True
+                    subjects[subject_id - 1][i][1].append(course)
+                    break
+            if not flag_already_exists:
+                subjects[subject_id - 1].append([semester, [course]])
+        else:
+            if course not in semesters:
+                subjects[subject_id - 1].append(course)
 
     ############# Begin writing in new file ##############
+    relative_support_divisor = 0
     with open(file, "w", newline="", encoding="utf-8") as file:
         for sub in subjects:
             if sub != []:
-                len_sub = len(sub)
-                for i in range(len_sub):
-                    sub[i] = all_distinct_courses.index(sub[i])
-                sub = sorted(sub)
-                for course in sub:
-                    file.write(str(course) + " ")
-                file.write("\n")
+                if not semesters_basis_bool:
+                    len_sub = len(sub)
+                    for i in range(len_sub):
+                        sub[i] = all_distinct_courses.index(sub[i])
+                    sub = sorted(sub)
+                    for course in sub:
+                        file.write(str(course) + " ")
+                    file.write("\n")
+                else:
+                    for sem in sub:
+                        for i in range(len(sem[1])):
+                            sem[1][i] = all_distinct_courses.index(sem[1][i])
+                        sem[1] = sorted(sem[1])
+                        for course in sem[1]:
+                            file.write(str(course) + " ")
+                        relative_support_divisor += 1
+                        file.write("\n")
+    if not semesters_basis_bool:
+        return df["subjectId"].nunique()
+    return relative_support_divisor
 
 
 # For the second algorithm - Based on semesters/years and not on students

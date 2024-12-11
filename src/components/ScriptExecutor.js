@@ -81,7 +81,6 @@ const checkBoxGroupColumnData = [
     "Started in summer"
 ]
 
-
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
     const [output2, setOutput2] = useState('');
@@ -89,13 +88,9 @@ const ScriptExecutor = () => {
     const [postProcOutput2, setPostProcOutput2] = useState('');  // Postproc output for column 2
     const [preOutput1, setPreOutput1] = useState('')
     const [preOutput2, setPreOutput2] = useState('')
-    const [secondFreqItemsetOutput1, setSecondFreqItemsetOutput1] = useState('');
-    const [secondFreqItemsetOutput2, setSecondFreqItemsetOutput2] = useState('');
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
-    const [secondFreqItemsetData1, setSecondFreqItemsetData1] = useState({})
-    const [secondFreqItemsetData2, setSecondFreqItemsetData2] = useState({})
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
@@ -131,6 +126,7 @@ const ScriptExecutor = () => {
             return acc;
         }, {}),
     });
+    const [studentsBasis, setStudentsBasis] = useState(false)
 
 
 
@@ -138,6 +134,7 @@ const ScriptExecutor = () => {
         const values = selectedValues
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
         const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
+        const studentsBasisBoolean = studentsBasis;
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
         try {
@@ -154,7 +151,8 @@ const ScriptExecutor = () => {
                     minSup: minSups[`column${columnIndex}`] !== 0 ? minSups[`column${columnIndex}`][0] : 0,
                     minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
                 },
-                checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k])
+                checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
+                studentsBasisBoolean: studentsBasisBoolean
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -212,6 +210,7 @@ const ScriptExecutor = () => {
                 icicleData = buildIcicleHierarchySeqPats(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
+
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
                 icicleData = buildFrequentItemsetHierarchy(onlyOutput)
             }
@@ -219,7 +218,7 @@ const ScriptExecutor = () => {
             // Set output in respective column
             if (columnIndex === 1) {
                 setPostProcOutput1(preprocOutput);
-                setPreOutput1(preOutput.join('\n'))
+                setPreOutput1(preOutput.join('\n'));
                 setOutput1(onlyOutput.join('\n'));
                 setData1(icicleData);
             } else {
@@ -231,39 +230,26 @@ const ScriptExecutor = () => {
             setCompareOutputVisible(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
-            if (error.message === "Empty dataset!") {
-                let responseLines = response.data.output.split('\n')
-                console.log(responseLines)
+            let responseLines = response.data.output.split('\n')
 
-                for (let i = 0; i < responseLines.length; i++) {
-                    if (responseLines[i].startsWith('WARNING')) {
-                        responseLines = responseLines.slice(0, i)
-                        break
-                    }
-                }
-                console.log(responseLines)
-                if (columnIndex === 1) {
-                    setPreOutput1(responseLines.join("\n"))
-                    setOutput1(errorMessage);
-                    setData1(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput1('');
-                } else {
-                    setPreOutput2(responseLines.join("\n"))
-                    setOutput2(errorMessage);
-                    setData2(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput2('');
-                }
-            } else {
-                if (columnIndex === 1) {
-                    setOutput1(errorMessage);
-                    setData1(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput1('');
-                } else {
-                    setOutput2(errorMessage);
-                    setData2(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput2('');
+            for (let i = 0; i < responseLines.length; i++) {
+                if (responseLines[i].startsWith('WARNING')) {
+                    responseLines = responseLines.slice(0, i)
+                    break
                 }
             }
+            if (columnIndex === 1) {
+                setPreOutput1(responseLines.join("\n"))
+                setOutput1(errorMessage);
+                setData1(buildIcicleHierarchySeqPats([]))
+                setPostProcOutput1('');
+            } else {
+                setPreOutput2(responseLines.join("\n"))
+                setOutput2(errorMessage);
+                setData2(buildIcicleHierarchySeqPats([]))
+                setPostProcOutput2('');
+            }
+
         }
     };
 
@@ -323,6 +309,10 @@ const ScriptExecutor = () => {
         }));
     };
 
+    const handleSetStudentsBasisChange = () => {
+        setStudentsBasis((prev) => !prev);
+    };
+
     return (
         <div className="container">
 
@@ -345,7 +335,19 @@ const ScriptExecutor = () => {
                                 {option}
                             </label>
                         ))}
-
+                        {selectedValues.at(-1) !== 'Sequence Patterns' && group.groupName === 'Select the analysis method' ? <div className="checkbox-container">
+                            <div key="Set Students as Basis">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="Set Students as basis"
+                                        checked={studentsBasis}
+                                        onChange={handleSetStudentsBasisChange}
+                                    />
+                                    Set Students as Basis
+                                </label>
+                            </div>
+                        </div> : null}
                     </div>
 
                 ))}
@@ -466,12 +468,6 @@ const ScriptExecutor = () => {
                         </div>
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
-
-                        {secondFreqItemsetOutput1 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={secondFreqItemsetData1}
-                            /></div>
-                            <h3>Output:</h3>
-                            <pre>{secondFreqItemsetOutput1}</pre></div> : null}
                     </div>
                 </div>
 
@@ -575,11 +571,6 @@ const ScriptExecutor = () => {
                             /></div>
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
-                        {secondFreqItemsetOutput2 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={secondFreqItemsetData2}
-                            /></div>
-                            <h3>Output:</h3>
-                            <pre>{secondFreqItemsetOutput2}</pre></div> : null}
                     </div>
                 </div>
             </div>

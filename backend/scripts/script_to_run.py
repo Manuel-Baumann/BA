@@ -29,6 +29,8 @@ try:
     min_sup = os.getenv("MIN_SUP")
     min_conf = os.getenv("MIN_CONF")
     checkbox_data = os.getenv("CHECKBOX_DATA")
+    students_basis_bool = os.getenv("STUDENTS_BASIS_BOOL")
+
     # Example usage of the values
 
     #
@@ -81,6 +83,7 @@ try:
         min_sup,
         min_conf,
         checkbox_data,
+        students_basis_bool,
     )
 
 except Exception as e:

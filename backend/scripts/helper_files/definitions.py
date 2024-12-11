@@ -5,6 +5,7 @@ tmp4 = "./Results/tmp4.txt"
 tmp5 = "./Results/tmp4.txt"
 
 not_passed_prefix = "(Not passed) "
+MAX_VALUE_OF_SUBJECT_ID = 5395
 
 mandatory_courses_arr = [
     "BAK",
