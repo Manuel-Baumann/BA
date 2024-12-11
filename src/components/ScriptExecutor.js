@@ -212,6 +212,7 @@ const ScriptExecutor = () => {
                 icicleData = buildIcicleHierarchySeqPats(onlyOutput);
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
+
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
                 icicleData = buildFrequentItemsetHierarchy(onlyOutput)
             }
@@ -231,39 +232,26 @@ const ScriptExecutor = () => {
             setCompareOutputVisible(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
-            if (error.message === "Empty dataset!") {
-                let responseLines = response.data.output.split('\n')
-                console.log(responseLines)
+            let responseLines = response.data.output.split('\n')
 
-                for (let i = 0; i < responseLines.length; i++) {
-                    if (responseLines[i].startsWith('WARNING')) {
-                        responseLines = responseLines.slice(0, i)
-                        break
-                    }
-                }
-                console.log(responseLines)
-                if (columnIndex === 1) {
-                    setPreOutput1(responseLines.join("\n"))
-                    setOutput1(errorMessage);
-                    setData1(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput1('');
-                } else {
-                    setPreOutput2(responseLines.join("\n"))
-                    setOutput2(errorMessage);
-                    setData2(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput2('');
-                }
-            } else {
-                if (columnIndex === 1) {
-                    setOutput1(errorMessage);
-                    setData1(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput1('');
-                } else {
-                    setOutput2(errorMessage);
-                    setData2(buildIcicleHierarchySeqPats([]))
-                    setPostProcOutput2('');
+            for (let i = 0; i < responseLines.length; i++) {
+                if (responseLines[i].startsWith('WARNING')) {
+                    responseLines = responseLines.slice(0, i)
+                    break
                 }
             }
+            if (columnIndex === 1) {
+                setPreOutput1(responseLines.join("\n"))
+                setOutput1(errorMessage);
+                setData1(buildIcicleHierarchySeqPats([]))
+                setPostProcOutput1('');
+            } else {
+                setPreOutput2(responseLines.join("\n"))
+                setOutput2(errorMessage);
+                setData2(buildIcicleHierarchySeqPats([]))
+                setPostProcOutput2('');
+            }
+
         }
     };
 

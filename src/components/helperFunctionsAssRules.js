@@ -39,8 +39,7 @@ function addToAssRulesTreeIcicle(tree, steps, support, confidence) {
 
 export const buildAssRulesIcicleHierarchy = (patterns) => {
     if (patterns === undefined || patterns == [] || patterns.length === 0) {
-        console.log("empty: ", buildAssRulesIcicleHierarchy(["Empty dataset #SUP:1"]));
-        return buildAssRulesIcicleHierarchy(["Empty dataset #SUP:1"]);
+        return buildAssRulesIcicleHierarchy(["Empty dataset #SUP: 1 #CONF: 1"]);
     }
     const root = { name: "", children: [] };
     // Process each pattern, parse it, and add it to the tree
@@ -62,7 +61,6 @@ export const buildAssRulesIcicleHierarchy = (patterns) => {
     parsedData.forEach(({ steps, support, confidence }) => {
         addToAssRulesTreeIcicle(root, steps, support, confidence);
     });
-
     return root;
 };
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
