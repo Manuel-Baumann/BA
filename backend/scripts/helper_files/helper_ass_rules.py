@@ -1,9 +1,11 @@
 from spmf import Spmf
 
-MAX_VALUE_OF_SUBJECT_ID = 5395
+from .definitions import MAX_VALUE_OF_SUBJECT_ID
 
 
-def create_spmf_ass_rules_input(df, tmp, grade_bool, all_distinct_courses):
+def create_spmf_ass_rules_input(
+    df, file, grade_bool, all_distinct_courses, semesters_basis_bool
+):
     subjects = []
     for i in range(MAX_VALUE_OF_SUBJECT_ID):
         subjects.append([])
@@ -17,20 +19,41 @@ def create_spmf_ass_rules_input(df, tmp, grade_bool, all_distinct_courses):
         subject_id = int(row["subjectId"])
         course = row[str_grade_course]
         semesters = subjects[subject_id - 1]
-        if course not in semesters:
-            subjects[subject_id - 1].append(course)
+
+        if semesters_basis_bool:
+            semester = int(row["semester"])
+            flag_already_exists = False
+            for i in range(len(semesters)):
+                if semesters[i][0] == semester:
+                    flag_already_exists = True
+                    subjects[subject_id - 1][i][1].append(course)
+                    break
+            if not flag_already_exists:
+                subjects[subject_id - 1].append([semester, [course]])
+        else:
+            if course not in semesters:
+                subjects[subject_id - 1].append(course)
 
     ############# Begin writing in new file ##############
-    with open(tmp, "w", newline="", encoding="utf-8") as file:
+    with open(file, "w", newline="", encoding="utf-8") as file:
         for sub in subjects:
             if sub != []:
-                len_sub = len(sub)
-                for i in range(len_sub):
-                    sub[i] = all_distinct_courses.index(sub[i])
-                sub = sorted(sub)
-                for course in sub:
-                    file.write(str(course) + " ")
-                file.write("\n")
+                if not semesters_basis_bool:
+                    len_sub = len(sub)
+                    for i in range(len_sub):
+                        sub[i] = all_distinct_courses.index(sub[i])
+                    sub = sorted(sub)
+                    for course in sub:
+                        file.write(str(course) + " ")
+                    file.write("\n")
+                else:
+                    for sem in sub:
+                        for i in range(len(sem[1])):
+                            sem[1][i] = all_distinct_courses.index(sem[1][i])
+                        sem[1] = sorted(sem[1])
+                        for course in sem[1]:
+                            file.write(str(course) + " ")
+                        file.write("\n")
 
 
 def decode_spmf_ass_rules(input_path, output_path, all_distinct_courses):
