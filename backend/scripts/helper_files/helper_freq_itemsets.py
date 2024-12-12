@@ -11,8 +11,7 @@ def execute_freq_itemset_algorithm(
     bool_courses,
     mandatory_courses_arr,
     min_sup,
-    bool_matr1,
-    bool_matr2,
+    bool_matr,
     df_to_file_function,
     grade_bool,
     all_distinct_courses,
@@ -32,11 +31,11 @@ def execute_freq_itemset_algorithm(
     else:
         if normal_closed_maximal == 0:
             frequent_itemset = apriori(
-                bool_matr1, min_support=min_sup, use_colnames=True
+                bool_matr, min_support=min_sup, use_colnames=True
             )
 
         elif normal_closed_maximal == 2:
-            frequent_itemset = fpmax(bool_matr1, min_support=min_sup, use_colnames=True)
+            frequent_itemset = fpmax(bool_matr, min_support=min_sup, use_colnames=True)
 
         # print("Number of rules before filtering:", frequent_itemset.shape[0])
         if bool_courses and normal_closed_maximal == 0:

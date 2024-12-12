@@ -50,7 +50,10 @@ from helper_files.definitions import (
 all_distinct_courses = []
 TRUNCATE_OUTPUT = 100  # Lines of output that will be shown / vizualized
 
-bins_bool = False
+##################    Temporary booleans ################
+USE_S_OR_Y_AS_BASIS_FOR_FI_AR = False
+BINS_BOOL = True
+
 work_renamed = "./csv/work_renamed.csv"
 algo_name = ""
 global_min_sup = 200
@@ -137,7 +140,7 @@ def execute_script_func(
     ######################  Process input csv file  ############################
     work = preprocess_csv(
         work_renamed,
-        bins_bool,
+        BINS_BOOL,
         fe_bool_courses,
         fe_bool_all_students,
         fe_slider_min,
@@ -162,25 +165,21 @@ def execute_script_func(
 
     ################################## Frequent Itemsets ##################################
     if fe_sets_rules_patterns == 0:
-        student_courses_df = pd.DataFrame(
-            work.groupby("subjectId")[str_course_grade].unique()
-        )
-        te1 = TransactionEncoder()
-        bool_matr1 = te1.fit(student_courses_df[str_course_grade]).transform(
+        te = TransactionEncoder()
+        if not USE_S_OR_Y_AS_BASIS_FOR_FI_AR:
+            student_courses_df = pd.DataFrame(
+                work.groupby("subjectId")[str_course_grade].unique()
+            )
+        else:
+            ### Find frequent course/grade combinations within one semester/year ###
+            # Column semester is already updated depending on fe_bool_year
+            student_courses_df = pd.DataFrame(
+                work.groupby(["subjectId", "semester"])[str_course_grade].unique()
+            )
+        bool_matr = te.fit(student_courses_df[str_course_grade]).transform(
             student_courses_df[str_course_grade]
         )
-        bool_matr1 = pd.DataFrame(bool_matr1, columns=te1.columns_)
-
-        ### Find frequent course/grade combinations within one semester/year ###
-        # Column semester is already updated depending on fe_bool_year
-        student_courses_df = pd.DataFrame(
-            work.groupby(["subjectId", "semester"])[str_course_grade].unique()
-        )
-        te2 = TransactionEncoder()
-        bool_matr2 = te2.fit(student_courses_df[str_course_grade]).transform(
-            student_courses_df[str_course_grade]
-        )
-        bool_matr2 = pd.DataFrame(bool_matr2, columns=te2.columns_)
+        bool_matr = pd.DataFrame(bool_matr, columns=te.columns_)
 
         # Run the algorithm
         # Writes output for first algo into tmp and second into tmp2
@@ -191,8 +190,7 @@ def execute_script_func(
             fe_bool_courses,
             mandatory_courses_arr,
             global_min_sup,
-            bool_matr1,
-            bool_matr2,
+            bool_matr,
             df_to_file,
             grade_bool,
             all_distinct_courses,
