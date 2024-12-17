@@ -66,6 +66,7 @@ def execute_script_func(
     fe_min_sup,
     fe_min_conf,
     fe_checkbox_data,
+    fe_students_basis_bool,
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -122,9 +123,18 @@ def execute_script_func(
         )
         print("Automatic minimum support:", global_min_sup)
         print("Automatic minimum confidence:", global_min_conf)
+    global USE_S_OR_Y_AS_BASIS_FOR_FI_AR
+    if fe_students_basis_bool == "False":
+        USE_S_OR_Y_AS_BASIS_FOR_FI_AR = True
+    else:
+        USE_S_OR_Y_AS_BASIS_FOR_FI_AR = False
 
-    # Column values
-
+    print(
+        "fe_studentsbasisbool",
+        fe_students_basis_bool,
+        "BASIS:",
+        USE_S_OR_Y_AS_BASIS_FOR_FI_AR,
+    )
     # renaming()
 
     ######################  Process input csv file  ############################

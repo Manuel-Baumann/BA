@@ -131,6 +131,7 @@ def determine_params_automatically(
     fe_slider_max,
 ):
     fe_min_sup = 0.8
+    fe_min_conf = 0.1
     if not fe_bool_year:
         if not fe_bool_passed_courses:
             fe_min_sup = 0.05
