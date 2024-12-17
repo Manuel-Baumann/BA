@@ -24,7 +24,8 @@ const radioGroupData = [
     {
         groupName: "Select the type of academic data",
         options: ['Courses', 'Grades'],
-        info: "Choose wether to run the algorithm on the courses names or the grades that the students got."
+        info: "Choose wether to run the algorithm on the courses names or the grades that the students got. Putting values into bins means for " +
+            "grades, 1.0, 1.3, 1.7 -> 1 ... - and for courses putting math subjects into the Math-Bin and so on."
     },
     {
         groupName: "Select the time period",
@@ -40,7 +41,8 @@ const radioGroupData = [
     {
         groupName: "Select the analysis method",
         options: ['Frequent Itemsets', 'Association Rules', 'Sequence Patterns'],
-        info: "Choose one of the three different types of information to be shown."
+        info: "Choose one of the three different types of information to be shown. Having Students as basis means not treating each" +
+            " semester/year individually, but only each student.",
     },
 ];
 // columnValues: [options1, options2, ...]
@@ -81,7 +83,6 @@ const checkBoxGroupColumnData = [
     "Started in summer"
 ]
 
-
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
     const [output2, setOutput2] = useState('');
@@ -89,13 +90,9 @@ const ScriptExecutor = () => {
     const [postProcOutput2, setPostProcOutput2] = useState('');  // Postproc output for column 2
     const [preOutput1, setPreOutput1] = useState('')
     const [preOutput2, setPreOutput2] = useState('')
-    const [secondFreqItemsetOutput1, setSecondFreqItemsetOutput1] = useState('');
-    const [secondFreqItemsetOutput2, setSecondFreqItemsetOutput2] = useState('');
     const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
-    const [secondFreqItemsetData1, setSecondFreqItemsetData1] = useState({})
-    const [secondFreqItemsetData2, setSecondFreqItemsetData2] = useState({})
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
@@ -131,7 +128,8 @@ const ScriptExecutor = () => {
             return acc;
         }, {}),
     });
-
+    const [studentsBasis, setStudentsBasis] = useState(false)
+    const [binsBool, setBinsBool] = useState(false)
 
 
     const executeScript = async (columnIndex) => {
@@ -154,7 +152,9 @@ const ScriptExecutor = () => {
                     minSup: minSups[`column${columnIndex}`] !== 0 ? minSups[`column${columnIndex}`][0] : 0,
                     minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
                 },
-                checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k])
+                checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
+                studentsBasisBoolean: studentsBasis,
+                binsBoolean: binsBool
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -220,7 +220,7 @@ const ScriptExecutor = () => {
             // Set output in respective column
             if (columnIndex === 1) {
                 setPostProcOutput1(preprocOutput);
-                setPreOutput1(preOutput.join('\n'))
+                setPreOutput1(preOutput.join('\n'));
                 setOutput1(onlyOutput.join('\n'));
                 setData1(icicleData);
             } else {
@@ -311,6 +311,13 @@ const ScriptExecutor = () => {
         }));
     };
 
+    const handleSetStudentsBasisChange = () => {
+        setStudentsBasis((prev) => !prev);
+    };
+    const handleBinsBoolChange = () => {
+        setBinsBool((prev) => !prev);
+    };
+
     return (
         <div className="container">
 
@@ -333,7 +340,32 @@ const ScriptExecutor = () => {
                                 {option}
                             </label>
                         ))}
-
+                        {selectedValues.at(-1) !== 'Sequence Patterns' && group.groupName === 'Select the analysis method' ? <div className="checkbox-container">
+                            <div key="Set Students as Basis">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="Set Students as basis"
+                                        checked={studentsBasis}
+                                        onChange={handleSetStudentsBasisChange}
+                                    />
+                                    Set Students as basis
+                                </label>
+                            </div>
+                        </div> : null}
+                        {group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
+                            <div key="Put values into bins">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="Put values into bins"
+                                        checked={binsBool}
+                                        onChange={handleBinsBoolChange}
+                                    />
+                                    Put values into bins
+                                </label>
+                            </div>
+                        </div> : null}
                     </div>
 
                 ))}
@@ -454,12 +486,6 @@ const ScriptExecutor = () => {
                         </div>
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
-
-                        {secondFreqItemsetOutput1 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={secondFreqItemsetData1}
-                            /></div>
-                            <h3>Output:</h3>
-                            <pre>{secondFreqItemsetOutput1}</pre></div> : null}
                     </div>
                 </div>
 
@@ -563,11 +589,6 @@ const ScriptExecutor = () => {
                             /></div>
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
-                        {secondFreqItemsetOutput2 !== '' ? <div><div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={secondFreqItemsetData2}
-                            /></div>
-                            <h3>Output:</h3>
-                            <pre>{secondFreqItemsetOutput2}</pre></div> : null}
                     </div>
                 </div>
             </div>

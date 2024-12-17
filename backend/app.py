@@ -22,6 +22,8 @@ def execute_script():
     min_sup = data.get("algoParams").get("minSup")
     min_conf = data.get("algoParams").get("minConf")
     checkbox_data = data.get("checkBoxData")
+    students_basis_boolean = data.get("studentsBasisBoolean")
+    bins_bool = data.get("binsBoolean")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -35,6 +37,8 @@ def execute_script():
         "MIN_SUP": str(min_sup),
         "MIN_CONF": str(min_conf),
         "CHECKBOX_DATA": ",".join(checkbox_data),
+        "STUDENTS_BASIS_BOOL": str(students_basis_boolean),
+        "BINS_BOOL": str(bins_bool),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")
