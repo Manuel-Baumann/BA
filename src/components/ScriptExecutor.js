@@ -24,7 +24,8 @@ const radioGroupData = [
     {
         groupName: "Select the type of academic data",
         options: ['Courses', 'Grades'],
-        info: "Choose wether to run the algorithm on the courses names or the grades that the students got."
+        info: "Choose wether to run the algorithm on the courses names or the grades that the students got. Putting values into bins means for " +
+            "grades, 1.0, 1.3, 1.7 -> 1 ... - and for courses putting math subjects into the Math-Bin and so on."
     },
     {
         groupName: "Select the time period",
@@ -40,7 +41,8 @@ const radioGroupData = [
     {
         groupName: "Select the analysis method",
         options: ['Frequent Itemsets', 'Association Rules', 'Sequence Patterns'],
-        info: "Choose one of the three different types of information to be shown."
+        info: "Choose one of the three different types of information to be shown. Having Students as basis means not treating each" +
+            " semester/year individually, but only each student.",
     },
 ];
 // columnValues: [options1, options2, ...]
@@ -127,14 +129,13 @@ const ScriptExecutor = () => {
         }, {}),
     });
     const [studentsBasis, setStudentsBasis] = useState(false)
-
+    const [binsBool, setBinsBool] = useState(false)
 
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
         const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
-        const studentsBasisBoolean = studentsBasis;
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
         try {
@@ -152,7 +153,8 @@ const ScriptExecutor = () => {
                     minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
                 },
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
-                studentsBasisBoolean: studentsBasisBoolean
+                studentsBasisBoolean: studentsBasis,
+                binsBoolean: binsBool
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -312,6 +314,9 @@ const ScriptExecutor = () => {
     const handleSetStudentsBasisChange = () => {
         setStudentsBasis((prev) => !prev);
     };
+    const handleBinsBoolChange = () => {
+        setBinsBool((prev) => !prev);
+    };
 
     return (
         <div className="container">
@@ -344,7 +349,20 @@ const ScriptExecutor = () => {
                                         checked={studentsBasis}
                                         onChange={handleSetStudentsBasisChange}
                                     />
-                                    Set Students as Basis
+                                    Set Students as basis
+                                </label>
+                            </div>
+                        </div> : null}
+                        {group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
+                            <div key="Put values into bins">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="Put values into bins"
+                                        checked={binsBool}
+                                        onChange={handleBinsBoolChange}
+                                    />
+                                    Put values into bins
                                 </label>
                             </div>
                         </div> : null}
