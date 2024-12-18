@@ -76,20 +76,19 @@ export const IcicleWithHover = ({ data }) => {
             .attr('stroke', '#fff')
             .style('cursor', 'pointer')
             .on('mouseover', function (event, d) {
+                let htmlText = ""
                 if (d.data.name && d.data.name !== 'undefined') {
                     setHoveredNode(d);
                     highlightPath(d);
-
-                    d3.select(tooltipRef.current)
-                        .style('opacity', 1)
-                        .html(getHTML(d.data.name, d.data.support, d.data.finalSum, d.depth, d.data.confidence));
+                    htmlText = getHTML(d.data.name, d.data.support, d.data.finalSum, d.depth, d.data.confidence)
                 } else {
                     setHoveredNode(null)
                     highlightPath();
-                    d3.select(tooltipRef.current)
-                        .style('opacity', 1)
-                        .html(`<strong>Hover over a node</strong>`);
+                    htmlText = `<strong>Hover over a node</strong>`
                 }
+                d3.select(tooltipRef.current)
+                    .style('opacity', 1)
+                    .html(htmlText);
             })
             /*.on('mousemove', function (event) {
                 d3.select(tooltipRef.current)
@@ -183,8 +182,203 @@ export const IcicleWithHover = ({ data }) => {
 
 const getHTML = (nodeName, size, remainingSize, depth, confidence) => {
     let html = `<strong>Name:</strong> ${nodeName}<br/>`
-    if (size && size > 0) html = html + `<strong>Support:</strong> ${size.toFixed(4)}<br/>`
+    if (size && size > 0) html = html + `<strong>Support:</strong> ${parseFloat(size).toFixed(4)}<br/>`
     if (remainingSize && remainingSize > 0) html = html + `<strong>Remaining support:</strong> ${remainingSize.toFixed(4)}<br/>`
     if (confidence) html = html + `<strong>Confidence:</strong> ${confidence.toFixed(4)}<br/>`
-    return html + `<strong>Depth:</strong> ${depth}`
+    return depth ? html + `<strong>Depth:</strong> ${depth}` : html
 }
+
+export const BarChartWithTransitions = ({ data }) => {
+    const svgRef = useRef(); // Ref for the SVG element
+    const tooltipRef = useRef(); // Ref for the tooltip div
+    const [dimensions, setDimensions] = useState({
+        width: 800,
+        height: 400,
+        margin: { top: 40, right: 20, bottom: 60, left: 60 },
+    });
+    const svgContainerRef = useRef();
+    const [sortedData, setSortedData] = useState([]);
+
+    useEffect(() => {
+        // Initialize sortedData with the input data
+        setSortedData(data);
+    }, [data]);
+
+    useEffect(() => {
+        if (sortedData && sortedData.length > 0) {
+            drawChart();
+        }
+    }, [sortedData, dimensions]); // Trigger on data or dimensions change
+
+    useEffect(() => {
+        const container = svgContainerRef.current;
+
+        const resizeObserver = new ResizeObserver(() => {
+            if (container) {
+                setDimensions((prev) => ({
+                    ...prev,
+                    width: container.offsetWidth,
+                }));
+            }
+        });
+
+        resizeObserver.observe(container);
+
+        return () => resizeObserver.disconnect();
+    }, []);
+
+    const drawChart = () => {
+        const { width, height, margin } = dimensions;
+
+        // Fallback for very narrow charts
+        const MIN_WIDTH = 300;
+        const chartWidth = Math.max(width - margin.left - margin.right, MIN_WIDTH);
+        const chartHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select(svgRef.current)
+            .attr("width", width)
+            .attr("height", height);
+
+        let chartGroup = svg.select("g.chart-group");
+        if (chartGroup.empty()) {
+            chartGroup = svg.append("g")
+                .attr("class", "chart-group")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        }
+
+        // Scales
+        const xScale = d3.scaleBand()
+            .domain(sortedData.map(d => d.label)) // Use sortedData
+            .range([0, chartWidth])
+            .padding(0.1);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, 1])//d3.max(sortedData, d => d.value) || 0]) // Ensure domain has a valid max
+            .range([chartHeight, 0]);
+
+        // Axes
+        const xAxis = d3.axisBottom(xScale);
+        const yAxis = d3.axisLeft(yScale);
+
+        // Render X-axis
+        let xAxisGroup = chartGroup.select(".x-axis");
+        if (xAxisGroup.empty()) {
+            xAxisGroup = chartGroup.append("g").attr("class", "x-axis");
+        }
+        xAxisGroup
+            .attr("transform", `translate(0, ${chartHeight})`)
+            .call(xAxis);
+
+        // Render Y-axis
+        let yAxisGroup = chartGroup.select(".y-axis");
+        if (yAxisGroup.empty()) {
+            yAxisGroup = chartGroup.append("g").attr("class", "y-axis");
+        }
+        yAxisGroup.call(yAxis);
+
+        // Ensure X-axis label
+        let xLabel = chartGroup.select(".x-label");
+        if (xLabel.empty()) {
+            xLabel = chartGroup.append("text")
+                .attr("class", "x-label")
+                .attr("text-anchor", "middle");
+        }
+        xLabel
+            .attr("x", chartWidth / 2)
+            .attr("y", chartHeight + margin.bottom - 5) // Adjust margin.bottom if cut off
+            .text("Itemsets");
+
+        // Ensure Y-axis label
+        let yLabel = chartGroup.select(".y-label");
+        if (yLabel.empty()) {
+            yLabel = chartGroup.append("text")
+                .attr("class", "y-label")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90)");
+        }
+        yLabel
+            .attr("x", -chartHeight / 2)
+            .attr("y", -margin.left + 15)
+            .text("Support");
+
+        // Draw Bars
+        const bars = chartGroup.selectAll(".bar").data(sortedData, d => d.label);
+
+        bars.enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", d => xScale(d.label))
+            .attr("y", chartHeight)
+            .attr("width", xScale.bandwidth())
+            .attr("height", 0)
+            .on("mouseover", (event, d) => {
+                d3.select(event.currentTarget).style("fill", "#ffa726"); // Highlight bar
+                d3.select(tooltipRef.current)
+                    .style("opacity", 1)
+                    .html(getHTML(d.label, d.value, null, null, null));
+            })
+            .on("mouseout", (event) => {
+                d3.select(event.currentTarget).style("fill", "#69b3a2"); // Reset bar color
+                d3.select(tooltipRef.current).style('opacity', 0);
+            })
+            .merge(bars)
+            .transition()
+            .duration(1000)
+            .attr("x", d => xScale(d.label))
+            .attr("y", d => yScale(d.value))
+            .attr("width", xScale.bandwidth())
+            .attr("height", d => chartHeight - yScale(d.value))
+            .style("fill", "#69b3a2");
+
+        bars.exit().remove();
+    };
+
+    const sortData = (type) => {
+        let newData;
+        if (type === "alphabetical") {
+            newData = [...sortedData].sort((a, b) => a.label.localeCompare(b.label));
+        } else if (type === "length") {
+            newData = [...sortedData].sort((a, b) => {
+                const countA = (a.label.match(/&/g) || []).length;
+                const countB = (b.label.match(/&/g) || []).length;
+                return countA - countB || b.value - a.value; // First by & count, then by value
+            });
+        } else if (type === "support") {
+            newData = [...sortedData].sort((a, b) => b.value - a.value);
+        }
+        setSortedData(newData); // Update sortedData
+    };
+
+    return (
+        <div style={{ position: "relative" }}>
+            <div style={{ marginBottom: "10px" }}>
+                <button onClick={() => sortData("support")}>Sort by Support</button>
+                <button onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
+                <button onClick={() => sortData("length")}>Sort by Length</button>
+            </div>
+            <div ref={svgContainerRef} style={{ width: "100%", height: "auto" }}>
+                <svg ref={svgRef}>
+                    <g className="x-axis"></g>
+                    <g className="y-axis"></g>
+                </svg>
+            </div>
+            <div
+                ref={tooltipRef}
+                style={{
+                    position: "absolute",
+                    background: "#fff",
+                    border: "1px solid #ccc",
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    pointerEvents: "none",
+                    opacity: 0,
+                    transition: "opacity 0.2s ease",
+                    zIndex: 10,
+                    fontSize: '12px',
+                    color: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                }}
+            ></div>
+        </div>
+    );
+};
