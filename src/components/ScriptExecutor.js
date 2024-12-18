@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Slider from 'rc-slider';
-import { IcicleWithHover } from './Graph';
+import { IcicleWithHover, BarChartWithTransitions } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
 import { buildFrequentItemsetHierarchy } from './helperFunctionsFreqItemsets';
@@ -481,9 +481,12 @@ const ScriptExecutor = () => {
                         <h3>Information about the algorithm:</h3>
                         <pre className="pre">{preOutput1}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
-                        <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={data1} />
-                        </div>
+                        {selectedValues.at(-1) !== 'Frequent Itemsets' ?
+                            <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                <IcicleWithHover data={data1} />
+                            </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                <BarChartWithTransitions data={data1} />
+                            </div>}
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
                     </div>
@@ -584,9 +587,12 @@ const ScriptExecutor = () => {
                         <h3>Information about the algorithm:</h3>
                         <pre className="pre">{preOutput2}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
-                        <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                            <IcicleWithHover data={data2}
-                            /></div>
+                        {selectedValues.at(-1) !== 'Frequent Itemsets' ?
+                            <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                <IcicleWithHover data={data2} />
+                            </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                <BarChartWithTransitions data={data2} />
+                            </div>}
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
                     </div>
