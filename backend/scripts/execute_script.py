@@ -134,7 +134,6 @@ def execute_script_func(
         BINS_BOOL = True
     else:
         BINS_BOOL = False
-    print("fe_studentsbasisbool", BINS_BOOL)
     # renaming()
 
     ######################  Process input csv file  ############################
