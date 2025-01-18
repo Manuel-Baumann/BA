@@ -98,6 +98,8 @@ const ScriptExecutor = () => {
     const [showDiffBool, setShowDiffBool] = useState(false)
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
+    const [lastExecuted1, setLastExecuted1] = useState(-1)
+    const [lastExecuted2, setLastExecuted2] = useState(-1)
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
@@ -213,13 +215,17 @@ const ScriptExecutor = () => {
             const preOutput = mainOutputSplitted.slice(0, index + 1).filter(line => line.trim() !== '')
 
             // Fine tune data based on the algorithm that was selected
+            let lastExecuted = -1
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchySeqPats(onlyOutput);
+                lastExecuted = 2
             } else if (selectedValues.at(-1) === 'Association Rules') {
                 icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
+                lastExecuted = 1
 
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
                 icicleData = buildFrequentItemsetHierarchy(onlyOutput)
+                lastExecuted = 0
             }
 
             // Set output in respective column
@@ -228,12 +234,14 @@ const ScriptExecutor = () => {
                 setPreOutput1(preOutput.join('\n'));
                 setOutput1(onlyOutput.join('\n'));
                 sizeOfData1 = icicleData.length
+                setLastExecuted1(lastExecuted)
                 setData1(icicleData);
             } else {
                 setPostProcOutput2(preprocOutput);
                 setPreOutput2(preOutput.join('\n'))
                 setOutput2(onlyOutput.join('\n'));
                 sizeOfData2 = icicleData.length
+                setLastExecuted2(lastExecuted)
                 setData2(icicleData);
             }
             setShowDiffBool(false)
@@ -530,10 +538,11 @@ const ScriptExecutor = () => {
                         <h3>Information about the algorithm:</h3>
                         <pre className="pre">{preOutput1}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
-                        {selectedValues.at(-1) !== 'Frequent Itemsets' ?
-                            <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <IcicleWithHover data={data1} />
-                            </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                        {lastExecuted1 !== 0 ?
+                            lastExecuted1 === -1 ? <></> :
+                                <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                    <IcicleWithHover data={data1} />
+                                </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} />
                             </div>}
                         <h3>Output:</h3>
@@ -636,10 +645,11 @@ const ScriptExecutor = () => {
                         <h3>Information about the algorithm:</h3>
                         <pre className="pre">{preOutput2}</pre>  {/* Extra output for column 1 */}
                         {/* Graph */}
-                        {selectedValues.at(-1) !== 'Frequent Itemsets' ?
-                            <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <IcicleWithHover data={data2} />
-                            </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                        {lastExecuted2 !== 0 ?
+                            lastExecuted2 === -1 ? <></> :
+                                <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
+                                    <IcicleWithHover data={data2} />
+                                </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} />
                             </div>}
                         <h3>Output:</h3>
