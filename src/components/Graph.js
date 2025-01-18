@@ -188,20 +188,22 @@ const getHTML = (nodeName, size, remainingSize, depth, confidence) => {
     return depth ? html + `<strong>Depth:</strong> ${depth}` : html
 }
 
-export const BarChartWithTransitions = ({ data }) => {
+export const BarChartWithTransitions = ({ data, sizeOfData }) => {
     const svgRef = useRef(); // Ref for the SVG element
     const tooltipRef = useRef(); // Ref for the tooltip div
+    //const lenOfData = data && typeof data.length === "number" ? data.length : 0
+    const [dimHeight, setDimHeight] = useState(Math.max(350, 100 + sizeOfData * 17))
     const [dimensions, setDimensions] = useState({
         width: 800,
-        height: 400,
+        height: dimHeight,
         margin: { top: 40, right: 20, bottom: 60, left: 60 },
     });
     const svgContainerRef = useRef();
     const [sortedData, setSortedData] = useState([]);
-
     useEffect(() => {
         // Initialize sortedData with the input data
         setSortedData(data);
+        setDimHeight(Math.max(350, 100 + sizeOfData * 17))
     }, [data]);
 
     useEffect(() => {
@@ -218,6 +220,7 @@ export const BarChartWithTransitions = ({ data }) => {
                 setDimensions((prev) => ({
                     ...prev,
                     width: container.offsetWidth,
+                    height: dimHeight//container.offsetHeight
                 }));
             }
         });
@@ -225,7 +228,7 @@ export const BarChartWithTransitions = ({ data }) => {
         resizeObserver.observe(container);
 
         return () => resizeObserver.disconnect();
-    }, []);
+    }, [dimHeight]);
 
     const drawChart = () => {
         const { width, height, margin } = dimensions;
@@ -247,18 +250,19 @@ export const BarChartWithTransitions = ({ data }) => {
         }
 
         // Scales
-        const xScale = d3.scaleBand()
-            .domain(sortedData.map(d => d.label)) // Use sortedData
-            .range([0, chartWidth])
-            .padding(0.1);
+        const xScale = d3.scaleLinear()
+            .domain([0, 1])// d3.max(sortedData, d => d.value) || 0]) // Use value for width
+            .range([0, chartWidth]); // Horizontal range for bar lengths
 
-        const yScale = d3.scaleLinear()
-            .domain([0, 1])//d3.max(sortedData, d => d.value) || 0]) // Ensure domain has a valid max
-            .range([chartHeight, 0]);
+        const yScale = d3.scaleBand()
+            .domain(sortedData.map(d => d.label)) // Use labels for vertical positioning
+            .range([0, chartHeight]) // Vertical range
+            .padding(0.1); // Add space between bars
+
 
         // Axes
-        const xAxis = d3.axisBottom(xScale);
-        const yAxis = d3.axisLeft(yScale);
+        const xAxis = d3.axisTop(xScale); // Move X-axis to the top
+        const yAxis = d3.axisLeft(yScale); // Y-axis for vertical labels
 
         // Render X-axis
         let xAxisGroup = chartGroup.select(".x-axis");
@@ -266,7 +270,7 @@ export const BarChartWithTransitions = ({ data }) => {
             xAxisGroup = chartGroup.append("g").attr("class", "x-axis");
         }
         xAxisGroup
-            .attr("transform", `translate(0, ${chartHeight})`)
+            .attr("transform", `translate(0, 0)`) // Place X-axis at the top
             .call(xAxis);
 
         // Render Y-axis
@@ -284,22 +288,11 @@ export const BarChartWithTransitions = ({ data }) => {
                 .attr("text-anchor", "middle");
         }
         xLabel
-            .attr("x", chartWidth / 2)
-            .attr("y", chartHeight + margin.bottom - 5) // Adjust margin.bottom if cut off
-            .text("Itemsets");
+            .attr("x", 10)
+            .attr("y", -margin.top + 20) // Position above the X-axis
+            .text("Itemsets \\ Support");
 
-        // Ensure Y-axis label
-        let yLabel = chartGroup.select(".y-label");
-        if (yLabel.empty()) {
-            yLabel = chartGroup.append("text")
-                .attr("class", "y-label")
-                .attr("text-anchor", "middle")
-                .attr("transform", "rotate(-90)");
-        }
-        yLabel
-            .attr("x", -chartHeight / 2)
-            .attr("y", -margin.left + 15)
-            .text("Support");
+
 
         // Draw Bars
         const bars = chartGroup.selectAll(".bar").data(sortedData, d => d.label);
@@ -307,15 +300,23 @@ export const BarChartWithTransitions = ({ data }) => {
         bars.enter()
             .append("rect")
             .attr("class", "bar")
-            .attr("x", d => xScale(d.label))
-            .attr("y", chartHeight)
-            .attr("width", xScale.bandwidth())
-            .attr("height", 0)
+            .attr("x", 0) // Start bars at X = 0
+            .attr("y", d => yScale(d.label)) // Vertical position based on label
+            .attr("width", 0) // Initial width for transition
+            .attr("height", yScale.bandwidth()) // Height depends on the band
             .on("mouseover", (event, d) => {
                 d3.select(event.currentTarget).style("fill", "#ffa726"); // Highlight bar
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(getHTML(d.label, d.value, null, null, null));
+                    .html(getHTML(d.label, d.value, null, null, null))
+                // Update the tooltip position when mouse moves
+                d3.select(event.currentTarget).on("mousemove", (event) => {
+                    const [mouseX, mouseY] = d3.pointer(event); // Get mouse position
+                    // Position the tooltip at the mouse's location
+                    d3.select(tooltipRef.current)
+                        .style("left", `${mouseX + 95}px`) // Add offset to avoid it being directly under the cursor
+                        .style("top", `${mouseY + 90}px`); // Add offset
+                })
             })
             .on("mouseout", (event) => {
                 d3.select(event.currentTarget).style("fill", "#69b3a2"); // Reset bar color
@@ -324,10 +325,10 @@ export const BarChartWithTransitions = ({ data }) => {
             .merge(bars)
             .transition()
             .duration(1000)
-            .attr("x", d => xScale(d.label))
-            .attr("y", d => yScale(d.value))
-            .attr("width", xScale.bandwidth())
-            .attr("height", d => chartHeight - yScale(d.value))
+            .attr("x", 0)
+            .attr("y", d => yScale(d.label)) // Update vertical position
+            .attr("width", d => xScale(d.value)) // Extend horizontally based on value
+            .attr("height", yScale.bandwidth()) // Keep consistent height
             .style("fill", "#69b3a2");
 
         bars.exit().remove();
@@ -356,7 +357,7 @@ export const BarChartWithTransitions = ({ data }) => {
                 <button onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
                 <button onClick={() => sortData("length")}>Sort by Length</button>
             </div>
-            <div ref={svgContainerRef} style={{ width: "100%", height: "auto" }}>
+            <div ref={svgContainerRef} style={{ width: "100%", height: "100%" }}>
                 <svg ref={svgRef}>
                     <g className="x-axis"></g>
                     <g className="y-axis"></g>

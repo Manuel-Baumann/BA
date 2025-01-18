@@ -82,6 +82,8 @@ const checkBoxGroupColumnData = [
     "Started in winter",
     "Started in summer"
 ]
+let sizeOfData1 = 0
+let sizeOfData2 = 0
 
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
@@ -225,11 +227,13 @@ const ScriptExecutor = () => {
                 setPostProcOutput1(preprocOutput);
                 setPreOutput1(preOutput.join('\n'));
                 setOutput1(onlyOutput.join('\n'));
+                sizeOfData1 = icicleData.length
                 setData1(icicleData);
             } else {
                 setPostProcOutput2(preprocOutput);
                 setPreOutput2(preOutput.join('\n'))
                 setOutput2(onlyOutput.join('\n'));
+                sizeOfData2 = icicleData.length
                 setData2(icicleData);
             }
             setShowDiffBool(false)
@@ -246,11 +250,13 @@ const ScriptExecutor = () => {
             if (columnIndex === 1) {
                 setPreOutput1(responseLines.join("\n"))
                 setOutput1(errorMessage);
+                sizeOfData1 = 0
                 setData1(buildIcicleHierarchySeqPats([]))
                 setPostProcOutput1('');
             } else {
                 setPreOutput2(responseLines.join("\n"))
                 setOutput2(errorMessage);
+                sizeOfData2 = 0
                 setData2(buildIcicleHierarchySeqPats([]))
                 setPostProcOutput2('');
             }
@@ -528,7 +534,7 @@ const ScriptExecutor = () => {
                             <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <IcicleWithHover data={data1} />
                             </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <BarChartWithTransitions data={data1} />
+                                <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} />
                             </div>}
                         <h3>Output:</h3>
                         <pre>{output1}</pre>
@@ -634,7 +640,7 @@ const ScriptExecutor = () => {
                             <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <IcicleWithHover data={data2} />
                             </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <BarChartWithTransitions data={data2} />
+                                <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} />
                             </div>}
                         <h3>Output:</h3>
                         <pre>{output2}</pre>
