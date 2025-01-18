@@ -1,6 +1,7 @@
 // Sunburst.js
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import debounce from 'lodash.debounce'
 
 export const IcicleWithHover = ({ data }) => {
     const ref = useRef();
@@ -217,19 +218,24 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
     useEffect(() => {
         const container = svgContainerRef.current;
 
-        const resizeObserver = new ResizeObserver(() => {
+        // Debounced function
+        const debouncedResizeHandler = debounce(() => {
             if (container) {
                 setDimensions((prev) => ({
                     ...prev,
                     width: container.offsetWidth,
-                    height: dimHeight//container.offsetHeight
+                    height: dimHeight, // Or calculate dynamically if needed
                 }));
             }
-        });
+        }, 200); // 200ms delay
 
-        resizeObserver.observe(container);
+        const resizeObserver = new ResizeObserver(debouncedResizeHandler);
+        if (container) resizeObserver.observe(container);
 
-        return () => resizeObserver.disconnect();
+        return () => {
+            resizeObserver.disconnect();
+            debouncedResizeHandler.cancel(); // Cancel any pending debounced calls
+        };
     }, [dimHeight]);
 
     const drawChart = () => {
