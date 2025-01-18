@@ -89,13 +89,15 @@ export const IcicleWithHover = ({ data }) => {
                 d3.select(tooltipRef.current)
                     .style('opacity', 1)
                     .html(htmlText);
-            })
-            /*.on('mousemove', function (event) {
-                d3.select(tooltipRef.current)
-                    .style('left', `${event.pageX + 10}px`)
-                    .style('top', `${event.pageY + 10}px`);
-            })*/
-            .on('mouseout', function () {
+                // Update the tooltip position when mouse moves
+                d3.select(event.currentTarget).on("mousemove", (event) => {
+                    const [mouseX, mouseY] = d3.pointer(event); // Get mouse position
+                    // Position the tooltip at the mouse's location
+                    d3.select(tooltipRef.current)
+                        .style("left", `${mouseX + 20}px`) // Add offset to avoid it being directly under the cursor
+                        .style("top", `${mouseY + 50}px`); // Add offset
+                })
+            }).on('mouseout', function () {
                 setHoveredNode(null);
                 resetHighlight();
                 d3.select(tooltipRef.current).style('opacity', 0);
