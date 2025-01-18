@@ -285,30 +285,26 @@
     background-color: #218838;
 }
 
-/* Style for the Comparison Output field */
 .compare-output {
-    background-color: #f1f3f5;
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: 6px;
-    border-top: 2px solid #ddd;
-}
-
-.compare-output h3 {
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 10px;
+    display: flex; /* Arrange children in a row */
+    width: 100%; /* Full width of parent container */
+    border: 1px solid #ccc; /* Optional border for the container */
 }
 
 .compare-output pre {
-    padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 4px;
-    font-size: 14px;
-    color: #495057;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+    flex: 1; /* Each field takes up one-third of the width */
+    margin: 0; /* Remove default margins */
+    padding: 10px; /* Add spacing inside each field */
+    text-align: left; /* Align text to the left */
+    border-right: 1px solid #ddd; /* Add a right border to separate columns */
+    background-color: #f9f9f9; /* Light gray background for better readability */
+    white-space: pre-wrap; /* Allow wrapping of long text */
+    overflow-wrap: break-word; /* Break long words for better fit */
+}
+
+/* Remove the right border from the last pre element */
+.compare-output pre:last-child {
+    border-right: none;
 }
 
 /* Container for checkbox options */

@@ -253,7 +253,7 @@ export const BarChartWithTransitions = ({ data }) => {
             .padding(0.1);
 
         const yScale = d3.scaleLinear()
-            .domain([0, d3.max(sortedData, d => d.value) || 0]) // Ensure domain has a valid max
+            .domain([0, 1])//d3.max(sortedData, d => d.value) || 0]) // Ensure domain has a valid max
             .range([chartHeight, 0]);
 
         // Axes

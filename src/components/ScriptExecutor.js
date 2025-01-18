@@ -90,7 +90,10 @@ const ScriptExecutor = () => {
     const [postProcOutput2, setPostProcOutput2] = useState('');  // Postproc output for column 2
     const [preOutput1, setPreOutput1] = useState('')
     const [preOutput2, setPreOutput2] = useState('')
-    const [compareOutputVisible, setCompareOutputVisible] = useState(false);  // State to control comparison output
+    const [diffOutputLeft, setDiffOutputLeft] = useState('')
+    const [diffOutputMiddle, setDiffOutputMiddle] = useState('')
+    const [diffOutputRight, setDiffOutputRight] = useState('')
+    const [showDiffBool, setShowDiffBool] = useState(false)
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
     const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
@@ -229,7 +232,7 @@ const ScriptExecutor = () => {
                 setOutput2(onlyOutput.join('\n'));
                 setData2(icicleData);
             }
-            setCompareOutputVisible(false)
+            setShowDiffBool(false)
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
             let responseLines = response.data.output.split('\n')
@@ -258,15 +261,55 @@ const ScriptExecutor = () => {
     const compareOutputs = () => {
         const outputLines1 = output1.split('\n');
         const outputLines2 = output2.split('\n');
+        const len1 = outputLines1.length
+        const len2 = outputLines2.length
+        let split1 = []
+        let split2 = []
+        let setOfStrings1 = []
+        let setOfStrings2 = []
 
+        split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+        split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+        setOfStrings1 = new Set(split1.map(([str]) => str))
+        setOfStrings2 = new Set(split2.map(([str]) => str))
+
+        console.log(split1, split2, setOfStrings1, setOfStrings2)
+        /*
+        
+                for (let i = 0; i < len1; i++) {
+                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                    }
+                }
+                for (let i = 0; i < len2; i++) {
+                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                    }
+                }*/
         // Filter lines that are only in column 1 or column 2
-        const uniqueToColumn1 = outputLines1.filter(line => !outputLines2.includes(line));
-        const uniqueToColumn2 = outputLines2.filter(line => !outputLines1.includes(line));
 
-        setOutput1(uniqueToColumn1.join('\n'));
-        setOutput2(uniqueToColumn2.join('\n'));
+        const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
+        const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str))//.map(([str, leftsup])=> [str, leftsup, split2]);
+        //const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str)).map(([str, leftsup]) => [str, leftsup, split2.filter(([str, sup]) =>)]);
+        const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
 
-        setCompareOutputVisible(true)
+        const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
+        const o2 = notUniqueColumn.map(([str, sup]) => `${str}       Support: ${sup}`)
+        const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
+
+        setDiffOutputLeft(o1.join('\n'));
+        setDiffOutputMiddle(o2.join('\n'));
+        setDiffOutputRight(o3.join('\n'));
+
+        setShowDiffBool(true)
     };
 
     // Function to handle checkbox toggle
@@ -599,19 +642,18 @@ const ScriptExecutor = () => {
                 </div>
             </div>
 
-            <button className="compare-button" onClick={compareOutputs}>Show only lines that don't exist in the other column</button>
 
             {/* Comparison Output Field */}
-            {compareOutputVisible && (
-                <>
-                    <hr />
+            {showDiffBool ? (
+                <><hr />
+                    <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <h3>Compare Outputs</h3>
-                        <pre>{postProcOutput1}</pre>
-                        <pre>{postProcOutput2}</pre>
-                    </div>
-                </>
-            )}
+                        <pre><h4>Only in left column</h4>{diffOutputLeft}</pre>
+                        <pre><h4>In both columns</h4>{diffOutputMiddle}</pre>
+                        <pre><h4>Only in right column</h4>{diffOutputRight}</pre>
+                    </div></>
+            ) : <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button>
+            }
         </div>
     );
 };
