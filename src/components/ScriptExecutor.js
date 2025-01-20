@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Slider from 'rc-slider';
-import { IcicleWithHover, BarChartWithTransitions } from './Graph';
+import { IcicleWithHover, BarChartWithTransitions, DiffChart } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
 import { buildFrequentItemsetHierarchy } from './helperFunctionsFreqItemsets';
@@ -53,7 +53,7 @@ const radioGroupColumnData = [
         header: 'Gender'
     },
     {
-        options: ['All', '1.0 (German?)', '3.0 (?)'],
+        options: ['All', '1.0 (EU?)', '3.0 (Non-EU?)'],
         info: '',
         header: 'Nationality'
     },
@@ -84,6 +84,9 @@ const checkBoxGroupColumnData = [
 ]
 let sizeOfData1 = 0
 let sizeOfData2 = 0
+let sizeOfDiffData = 0
+let sizeOfDiffLeftData = 0
+let sizeOfDiffRightData = 0
 
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
@@ -95,6 +98,9 @@ const ScriptExecutor = () => {
     const [diffOutputLeft, setDiffOutputLeft] = useState('')
     const [diffOutputMiddle, setDiffOutputMiddle] = useState('')
     const [diffOutputRight, setDiffOutputRight] = useState('')
+    const [diffData, setDiffData] = useState({})
+    const [diffLeftData, setDiffLeftData] = useState({})
+    const [diffRightData, setDiffRightData] = useState({})
     const [showDiffBool, setShowDiffBool] = useState(false)
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
@@ -273,57 +279,67 @@ const ScriptExecutor = () => {
     };
 
     const compareOutputs = () => {
-        const outputLines1 = output1.split('\n');
-        const outputLines2 = output2.split('\n');
-        const len1 = outputLines1.length
-        const len2 = outputLines2.length
-        let split1 = []
-        let split2 = []
-        let setOfStrings1 = []
-        let setOfStrings2 = []
+        if (lastExecuted1 === 0) { // Frequent Itemsets
+            // Execute 
+            const outputLines1 = output1.split('\n');
+            const outputLines2 = output2.split('\n');
+            // const len1 = outputLines1.length
+            // const len2 = outputLines2.length
+            let split1 = []
+            let split2 = []
+            let setOfStrings1 = []
+            let setOfStrings2 = []
 
-        split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-        split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-        setOfStrings1 = new Set(split1.map(([str]) => str))
-        setOfStrings2 = new Set(split2.map(([str]) => str))
-
-        console.log(split1, split2, setOfStrings1, setOfStrings2)
-        /*
-        
-                for (let i = 0; i < len1; i++) {
-                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+            split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            setOfStrings1 = new Set(split1.map(([str]) => str))
+            setOfStrings2 = new Set(split2.map(([str]) => str))
+            const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
+            const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
+            const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
+            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({ label: item, leftValue: split1.find(([str]) => str === item)?.[1], rightValue: split2.find(([str]) => str === item)?.[1] }))
+            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1] }))
+            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1] }))
+            // console.log(split1, split2, setOfStrings1, setOfStrings2)
+            /*
+            
+                    for (let i = 0; i < len1; i++) {
+                        if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                            split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                            setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                        } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                            split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                            setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                        }
                     }
-                }
-                for (let i = 0; i < len2; i++) {
-                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                    }
-                }*/
-        // Filter lines that are only in column 1 or column 2
+                    for (let i = 0; i < len2; i++) {
+                        if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                            split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                            setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                        } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                            split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                            setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                        }
+                    }*/
 
-        const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
-        const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str))//.map(([str, leftsup])=> [str, leftsup, split2]);
-        //const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str)).map(([str, leftsup]) => [str, leftsup, split2.filter(([str, sup]) =>)]);
-        const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
+            const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
+            const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
 
-        const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
-        const o2 = notUniqueColumn.map(([str, sup]) => `${str}       Support: ${sup}`)
-        const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
+            const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
+            const o2 = arrayOfNonUniqueObjects.map((item) => `${item.label}       Support: left->${item.leftValue}  right->${item.rightValue}`)
+            const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
 
-        setDiffOutputLeft(o1.join('\n'));
-        setDiffOutputMiddle(o2.join('\n'));
-        setDiffOutputRight(o3.join('\n'));
-
-        setShowDiffBool(true)
+            sizeOfDiffData = o2.length
+            sizeOfDiffLeftData = o1.length
+            sizeOfDiffRightData = o2.length
+            setDiffData(arrayOfNonUniqueObjects)
+            setDiffLeftData(arrayOfUniqueObjectsLeft)
+            setDiffRightData(arrayOfUniqueObjectsRight)
+            setDiffOutputLeft(o1.join('\n'));
+            setDiffOutputMiddle(o2.join('\n'));
+            setDiffOutputRight(o3.join('\n'));
+            setShowDiffBool(true)
+        }
     };
 
     // Function to handle checkbox toggle
@@ -429,7 +445,7 @@ const ScriptExecutor = () => {
                 {/* Slider for Number of ouput lines */}
                 <div className="slider-container">
                     <span className="info-icon">ℹ️
-                        <span className="tooltip-text">Amount of lines of output to be vizualized (200 -> All produced output)</span>
+                        <span className="tooltip-text">Amount of lines of output to be vizualized (200 -&gt; All produced output)</span>
                     </span>
                     <label>Output size: {numberOfOutputLines}</label>
                     <Slider
@@ -658,17 +674,18 @@ const ScriptExecutor = () => {
                 </div>
             </div>
 
-
             {/* Comparison Output Field */}
+            {/* Only shows if compare-button was pressed */}
+            {/* Compare-button only shows if both columns last executed the same algorithm*/}
             {showDiffBool ? (
                 <><hr />
                     <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <pre><h4>Only in left column</h4>{diffOutputLeft}</pre>
-                        <pre><h4>In both columns</h4>{diffOutputMiddle}</pre>
-                        <pre><h4>Only in right column</h4>{diffOutputRight}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{diffOutputLeft}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} /></div> : <></>}</pre>
+                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
+                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{diffOutputRight}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
                     </div></>
-            ) : <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button>
+            ) : lastExecuted1 === lastExecuted2 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }
         </div>
     );
