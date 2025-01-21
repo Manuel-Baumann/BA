@@ -30,6 +30,18 @@
     padding-bottom: 5px;
 }
 
+.below-div {
+    display: block;
+    margin-top: 1.5em;
+}
+
+.next-to-each-other {
+    display: flex; /* Use flexbox for horizontal alignment */
+    align-items: center; /* Vertically center items */
+    gap: 10px; /* Add some space between label and button */
+    margin-bottom: 10px; /* Add spacing between rows */
+}
+
 .dropdown-container {
     margin-bottom: 20px;
 }

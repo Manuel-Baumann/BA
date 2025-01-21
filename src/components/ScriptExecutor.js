@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Slider from 'rc-slider';
 import { IcicleWithHover, BarChartWithTransitions, DiffChart } from './Graph';
@@ -87,6 +87,8 @@ let sizeOfData2 = 0
 let sizeOfDiffData = 0
 let sizeOfDiffLeftData = 0
 let sizeOfDiffRightData = 0
+const allGrades = ['1.0', '1.3', '1.7', '2.0', '2.3', '2.7', '3.0', '3.3', '3.7', '4.0', '5.0']
+const marksObj = { 0: '1.0', 1: '1.3', 2: '1.7', 3: '2.0', 4: '2.3', 5: '2.7', 6: '3.0', 7: '3.3', 8: '3.7', 9: '4.0', 10: '5.0' }
 
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
@@ -143,7 +145,18 @@ const ScriptExecutor = () => {
     });
     const [studentsBasis, setStudentsBasis] = useState(false)
     const [binsBool, setBinsBool] = useState(false)
-
+    const [binsArr, setBinsArr] = useState(['5.0'])
+    const [currentBin, setCurrentBin] = useState('1.0')
+    const resetRemainingGrades = () => {
+        const filteredEntries = Object.entries(marksObj).filter(
+            ([, value]) => !binsArr.includes(value)
+        );
+        const result = Object.fromEntries(
+            filteredEntries.map(([_, value], index) => [index, value])
+        );
+        return result;
+    }
+    const [remainingGradesObj, setRemainingGradesObj] = useState(resetRemainingGrades())
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -167,7 +180,7 @@ const ScriptExecutor = () => {
                 },
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
                 studentsBasisBoolean: studentsBasis,
-                binsBoolean: binsBool
+                binsBoolean: values.at(1) === "Grades" ? binsBool : false
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -391,6 +404,37 @@ const ScriptExecutor = () => {
         setBinsBool((prev) => !prev);
     };
 
+    useEffect(() => {
+        if (remainingGradesObj[0]) { setCurrentBin(remainingGradesObj[0]) }
+    }, [remainingGradesObj])
+
+    useEffect(() => {
+        const updatedRemainingGrades = resetRemainingGrades();
+        setRemainingGradesObj(updatedRemainingGrades)
+    }, [binsArr])
+
+    const addBinHandler = () => {
+        setBinsArr((prev) => {
+            let insertIndex = 0;
+            for (const grade of prev) {
+                if (grade < currentBin) insertIndex++;
+                else if (grade === currentBin) return prev;
+                else break;
+            }
+            // Create a new array to ensure immutability
+            const updatedBinsArr = [...prev.slice(0, insertIndex), currentBin, ...prev.slice(insertIndex)];
+            return updatedBinsArr;
+        });
+    };
+    const getBinOfItem = (item, index) => {
+        const lastIndex = allGrades.findIndex(el => el === item) + 1
+        const firstIndex = index === 0 ? 0 : allGrades.findIndex(el => el === binsArr[index - 1]) + 1
+        return allGrades.slice(firstIndex, lastIndex).join(", ")
+    }
+    const handleDeleteBin = (index) => {
+        setBinsArr(binsArr.slice(0, index).concat(binsArr.slice(index + 1)))
+    }
+
     return (
         <div className="container">
 
@@ -426,7 +470,7 @@ const ScriptExecutor = () => {
                                 </label>
                             </div>
                         </div> : null}
-                        {group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
+                        {selectedValues.at(1) === "Grades" && group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
                             <div key="Put values into bins">
                                 <label>
                                     <input
@@ -437,6 +481,25 @@ const ScriptExecutor = () => {
                                     />
                                     Put values into bins
                                 </label>
+                                {binsBool ? <>
+                                    <label>Current Bins:</label>
+                                    {
+                                        binsArr.map((item, index) =>
+                                            <div className="next-to-each-other" key={(index + 1) * 3}><label key={(index + 1) * 2}> {getBinOfItem(item, index)}
+                                            </label>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}
+                                            </div>)
+                                    }
+                                    <div className="below-div"><Slider
+                                        range
+                                        min={0}
+                                        max={Object.keys(remainingGradesObj).length - 1}
+                                        marks={remainingGradesObj}
+                                        value={Object.keys(remainingGradesObj).find(key => remainingGradesObj[key] === currentBin)}
+                                        onChange={(value) => setCurrentBin(remainingGradesObj[value])}
+                                    /></div>
+                                    {Object.values(remainingGradesObj).length > 0 ? <div className="below-div">
+                                        <button className="execute-button" onClick={() => addBinHandler()}>Add bin</button></div> : null}
+                                </> : null}
                             </div>
                         </div> : null}
                     </div>
@@ -685,7 +748,7 @@ const ScriptExecutor = () => {
                         <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
                         <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{diffOutputRight}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
                     </div></>
-            ) : lastExecuted1 === lastExecuted2 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
+            ) : lastExecuted1 === lastExecuted2 && lastExecuted1 === 0 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }
         </div>
     );
