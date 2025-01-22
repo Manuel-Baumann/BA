@@ -31,6 +31,7 @@ try:
     checkbox_data = os.getenv("CHECKBOX_DATA")
     students_basis_bool = os.getenv("STUDENTS_BASIS_BOOL")
     bins_bool = os.getenv("BINS_BOOL")
+    bins_array = os.getenv("BINS_ARRAY")
 
     # Example usage of the values
 
@@ -86,6 +87,7 @@ try:
         checkbox_data,
         students_basis_bool,
         bins_bool,
+        bins_array,
     )
 
 except Exception as e:

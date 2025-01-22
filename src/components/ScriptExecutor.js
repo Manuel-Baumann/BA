@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Slider from 'rc-slider';
-import { IcicleWithHover, BarChartWithTransitions } from './Graph';
+import { IcicleWithHover, BarChartWithTransitions, DiffChart } from './Graph';
 import 'rc-slider/assets/index.css';
 import '../css/ScriptExecutor.css';
 import { buildFrequentItemsetHierarchy } from './helperFunctionsFreqItemsets';
@@ -53,7 +53,7 @@ const radioGroupColumnData = [
         header: 'Gender'
     },
     {
-        options: ['All', '1.0 (German?)', '3.0 (?)'],
+        options: ['All', '1.0 (EU?)', '3.0 (Non-EU?)'],
         info: '',
         header: 'Nationality'
     },
@@ -84,6 +84,11 @@ const checkBoxGroupColumnData = [
 ]
 let sizeOfData1 = 0
 let sizeOfData2 = 0
+let sizeOfDiffData = 0
+let sizeOfDiffLeftData = 0
+let sizeOfDiffRightData = 0
+const allGrades = ['1.0', '1.3', '1.7', '2.0', '2.3', '2.7', '3.0', '3.3', '3.7', '4.0', '5.0']
+const marksObj = { 0: '1.0', 1: '1.3', 2: '1.7', 3: '2.0', 4: '2.3', 5: '2.7', 6: '3.0', 7: '3.3', 8: '3.7', 9: '4.0', 10: '5.0' }
 
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
@@ -95,6 +100,9 @@ const ScriptExecutor = () => {
     const [diffOutputLeft, setDiffOutputLeft] = useState('')
     const [diffOutputMiddle, setDiffOutputMiddle] = useState('')
     const [diffOutputRight, setDiffOutputRight] = useState('')
+    const [diffData, setDiffData] = useState({})
+    const [diffLeftData, setDiffLeftData] = useState({})
+    const [diffRightData, setDiffRightData] = useState({})
     const [showDiffBool, setShowDiffBool] = useState(false)
     const [data1, setData1] = useState({});//buildIcicleHierarchy(["A#SUP:1", "A=>Y=>C#SUP:0.4", "A=>Y#SUP:0.9", "A=>Y=>K#SUP:0.1", "A=>Y=>L#SUP:0.1", "A=>Y=>M#SUP:0.1", "A=>Y=>M=>N#SUP:0.2"])
     const [data2, setData2] = useState({});
@@ -137,7 +145,18 @@ const ScriptExecutor = () => {
     });
     const [studentsBasis, setStudentsBasis] = useState(false)
     const [binsBool, setBinsBool] = useState(false)
-
+    const [binsArr, setBinsArr] = useState(['1.7', '2.7', '3.7', '4.0', '5.0'])
+    const [currentBin, setCurrentBin] = useState('1.0')
+    const resetRemainingGrades = () => {
+        const filteredEntries = Object.entries(marksObj).filter(
+            ([, value]) => !binsArr.includes(value)
+        );
+        const result = Object.fromEntries(
+            filteredEntries.map(([_, value], index) => [index, value])
+        );
+        return result;
+    }
+    const [remainingGradesObj, setRemainingGradesObj] = useState(resetRemainingGrades())
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -145,6 +164,7 @@ const ScriptExecutor = () => {
         const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
+        const binsBooleanForAlgorithm = values.at(1) === "Grades" ? binsBool : false
         try {
             // Execute the python script
             response = await axios.post('http://localhost:5000/execute', {
@@ -161,7 +181,8 @@ const ScriptExecutor = () => {
                 },
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
                 studentsBasisBoolean: studentsBasis,
-                binsBoolean: binsBool
+                binsBoolean: binsBooleanForAlgorithm,
+                binsArray: binsArr
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -216,6 +237,10 @@ const ScriptExecutor = () => {
 
             // Fine tune data based on the algorithm that was selected
             let lastExecuted = -1
+            // Apply renaming if bins were applied
+            if (binsBooleanForAlgorithm) {
+                onlyOutput = renameOutputToBinsName(onlyOutput)
+            }
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchySeqPats(onlyOutput);
                 lastExecuted = 2
@@ -273,57 +298,70 @@ const ScriptExecutor = () => {
     };
 
     const compareOutputs = () => {
-        const outputLines1 = output1.split('\n');
-        const outputLines2 = output2.split('\n');
-        const len1 = outputLines1.length
-        const len2 = outputLines2.length
-        let split1 = []
-        let split2 = []
-        let setOfStrings1 = []
-        let setOfStrings2 = []
+        if (lastExecuted1 === 0) { // Frequent Itemsets
+            // Execute 
+            const outputLines1 = output1.split('\n');
+            const outputLines2 = output2.split('\n');
+            // const len1 = outputLines1.length
+            // const len2 = outputLines2.length
+            let split1 = []
+            let split2 = []
+            let setOfStrings1 = []
+            let setOfStrings2 = []
 
-        split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-        split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-        setOfStrings1 = new Set(split1.map(([str]) => str))
-        setOfStrings2 = new Set(split2.map(([str]) => str))
+            split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            setOfStrings1 = new Set(split1.map(([str]) => str))
+            setOfStrings2 = new Set(split2.map(([str]) => str))
+            const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
+            const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
+            const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
+            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({ label: item, leftValue: split1.find(([str]) => str === item)?.[1], rightValue: split2.find(([str]) => str === item)?.[1] }))
+            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1] }))
+            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1] }))
+            // console.log(split1, split2, setOfStrings1, setOfStrings2)
 
-        console.log(split1, split2, setOfStrings1, setOfStrings2)
-        /*
-        
-                for (let i = 0; i < len1; i++) {
-                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                        split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                    }
+
+            const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
+            const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
+
+            const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
+            const o2 = arrayOfNonUniqueObjects.map((item) => `${item.label}       Support: left->${item.leftValue}  right->${item.rightValue}`)
+            const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
+
+            sizeOfDiffData = o2.length
+            sizeOfDiffLeftData = o1.length
+            sizeOfDiffRightData = o2.length
+            setDiffData(arrayOfNonUniqueObjects)
+            setDiffLeftData(arrayOfUniqueObjectsLeft)
+            setDiffRightData(arrayOfUniqueObjectsRight)
+            setDiffOutputLeft(o1.join('\n'));
+            setDiffOutputMiddle(o2.join('\n'));
+            setDiffOutputRight(o3.join('\n'));
+            setShowDiffBool(true)
+        }
+        else {
+            console.log("Diff beween Association Rules and Sequence Patterns")
+            /*
+            for (let i = 0; i < len1; i++) {
+                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
                 }
-                for (let i = 0; i < len2; i++) {
-                    if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                    } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                        split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                        setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                    }
-                }*/
-        // Filter lines that are only in column 1 or column 2
-
-        const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
-        const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str))//.map(([str, leftsup])=> [str, leftsup, split2]);
-        //const notUniqueColumn = split1.filter(([str]) => setOfStrings2.has(str)).map(([str, leftsup]) => [str, leftsup, split2.filter(([str, sup]) =>)]);
-        const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
-
-        const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
-        const o2 = notUniqueColumn.map(([str, sup]) => `${str}       Support: ${sup}`)
-        const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
-
-        setDiffOutputLeft(o1.join('\n'));
-        setDiffOutputMiddle(o2.join('\n'));
-        setDiffOutputRight(o3.join('\n'));
-
-        setShowDiffBool(true)
+            }
+            for (let i = 0; i < len2; i++) {
+                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                }
+            }*/
+        }
     };
 
     // Function to handle checkbox toggle
@@ -375,6 +413,59 @@ const ScriptExecutor = () => {
         setBinsBool((prev) => !prev);
     };
 
+    useEffect(() => {
+        if (remainingGradesObj[0]) { setCurrentBin(remainingGradesObj[0]) }
+    }, [remainingGradesObj])
+
+    useEffect(() => {
+        const updatedRemainingGrades = resetRemainingGrades();
+        setRemainingGradesObj(updatedRemainingGrades)
+    }, [binsArr])
+
+    const addBinHandler = () => {
+        setBinsArr((prev) => {
+            let insertIndex = 0;
+            for (const grade of prev) {
+                if (grade < currentBin) insertIndex++;
+                else if (grade === currentBin) return prev;
+                else break;
+            }
+            // Create a new array to ensure immutability
+            const updatedBinsArr = [...prev.slice(0, insertIndex), currentBin, ...prev.slice(insertIndex)];
+            return updatedBinsArr;
+        });
+    };
+    const getBinOfItem = (item, index) => {
+        const lastIndex = allGrades.findIndex(el => el === item) + 1
+        const firstIndex = index === 0 ? 0 : allGrades.findIndex(el => el === binsArr[index - 1]) + 1
+        return allGrades.slice(firstIndex, lastIndex).join(", ")
+    }
+    const handleDeleteBin = (index) => {
+        setBinsArr(binsArr.slice(0, index).concat(binsArr.slice(index + 1)))
+    }
+    const renameOutputToBinsName = (data) => {
+        const renameDataObj = {}
+        const numRows = binsArr.length
+        for (let i = 0; i < numRows; i++) {
+            const inputElement = document.getElementById(`row-${i}`);
+            if (inputElement) {
+                renameDataObj[`${i + 1}.0`] = inputElement.value || inputElement.placeholder;
+            }
+        }
+        return data.map((str) => {
+            const firstHashIndex = str.indexOf('#')
+            const rule = str.slice(0, firstHashIndex)
+            const supportAndConfidence = str.slice(firstHashIndex)
+            let updatedRule = rule
+            Object.keys(renameDataObj).forEach((key) => {
+                if (updatedRule.includes(key)) {
+                    updatedRule = updatedRule.replace(new RegExp(key, "g"), renameDataObj[key]);
+                }
+            });
+            return supportAndConfidence ? `${updatedRule}${supportAndConfidence}` : updatedRule;
+        });
+    }
+
     return (
         <div className="container">
 
@@ -410,7 +501,7 @@ const ScriptExecutor = () => {
                                 </label>
                             </div>
                         </div> : null}
-                        {group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
+                        {selectedValues.at(1) === "Grades" && group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
                             <div key="Put values into bins">
                                 <label>
                                     <input
@@ -421,6 +512,36 @@ const ScriptExecutor = () => {
                                     />
                                     Put values into bins
                                 </label>
+                                {binsBool ? <>
+                                    <h4>Current Bins:</h4>
+                                    <table className="bins-table">
+                                        <tr>
+                                            <th>Name of bin</th>
+                                            <th>Content</th>
+                                        </tr>
+                                        {
+                                            binsArr.map((item, index) =>
+                                                <tr key={(index + 1) * 4}>
+                                                    {/*<div className="next-to-each-other" key={(index + 1) * 3}><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label>*/}
+                                                    {/*index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</div>*/}
+                                                    <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
+                                                    <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
+                                                    <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</th>
+                                                </tr>)
+                                        }
+                                    </table>
+
+                                    <div className="below-div"><Slider
+                                        range
+                                        min={0}
+                                        max={Object.keys(remainingGradesObj).length - 1}
+                                        marks={remainingGradesObj}
+                                        value={Object.keys(remainingGradesObj).find(key => remainingGradesObj[key] === currentBin)}
+                                        onChange={(value) => setCurrentBin(remainingGradesObj[value])}
+                                    /></div>
+                                    {Object.values(remainingGradesObj).length > 0 ? <div className="below-div">
+                                        <button className="execute-button" onClick={() => addBinHandler()}>Add bin</button></div> : null}
+                                </> : null}
                             </div>
                         </div> : null}
                     </div>
@@ -429,7 +550,7 @@ const ScriptExecutor = () => {
                 {/* Slider for Number of ouput lines */}
                 <div className="slider-container">
                     <span className="info-icon">ℹ️
-                        <span className="tooltip-text">Amount of lines of output to be vizualized (200 -> All produced output)</span>
+                        <span className="tooltip-text">Amount of lines of output to be vizualized (200 -&gt; All produced output)</span>
                     </span>
                     <label>Output size: {numberOfOutputLines}</label>
                     <Slider
@@ -545,8 +666,8 @@ const ScriptExecutor = () => {
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} />
                             </div>}
-                        <h3>Output:</h3>
-                        <pre>{output1}</pre>
+                        {/*<h3>Output as text:</h3>
+                        <pre>{output1}</pre>*/}
                     </div>
                 </div>
 
@@ -652,23 +773,24 @@ const ScriptExecutor = () => {
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} />
                             </div>}
-                        <h3>Output:</h3>
-                        <pre>{output2}</pre>
+                        {/*<h3>Output as text:</h3>
+                        <pre>{output2}</pre>*/}
                     </div>
                 </div>
             </div>
 
-
             {/* Comparison Output Field */}
+            {/* Only shows if compare-button was pressed */}
+            {/* Compare-button only shows if both columns last executed the same algorithm*/}
             {showDiffBool ? (
                 <><hr />
                     <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <pre><h4>Only in left column</h4>{diffOutputLeft}</pre>
-                        <pre><h4>In both columns</h4>{diffOutputMiddle}</pre>
-                        <pre><h4>Only in right column</h4>{diffOutputRight}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{diffOutputLeft}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} /></div> : <></>}</pre>
+                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
+                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{diffOutputRight}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
                     </div></>
-            ) : <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button>
+            ) : lastExecuted1 === lastExecuted2 && lastExecuted1 === 0 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }
         </div>
     );

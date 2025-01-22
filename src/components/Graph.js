@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import debounce from 'lodash.debounce'
+import '../css/Graph.css';
 
 export const IcicleWithHover = ({ data }) => {
     const ref = useRef();
@@ -95,8 +96,8 @@ export const IcicleWithHover = ({ data }) => {
                     const [mouseX, mouseY] = d3.pointer(event); // Get mouse position
                     // Position the tooltip at the mouse's location
                     d3.select(tooltipRef.current)
-                        .style("left", `${mouseX + 20}px`) // Add offset to avoid it being directly under the cursor
-                        .style("top", `${mouseY + 50}px`); // Add offset
+                        .style("left", `${mouseX + 95}px`) // Add offset to avoid it being directly under the cursor
+                        .style("top", `${mouseY + 110}px`); // Add offset
                 })
             }).on('mouseout', function () {
                 setHoveredNode(null);
@@ -195,9 +196,9 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
     const svgRef = useRef(); // Ref for the SVG element
     const tooltipRef = useRef(); // Ref for the tooltip div
     //const lenOfData = data && typeof data.length === "number" ? data.length : 0
-    const [dimHeight, setDimHeight] = useState(Math.max(350, 100 + sizeOfData * 17))
+    const [dimHeight, setDimHeight] = useState(Math.max(250, 100 + sizeOfData * 17))
     const [dimensions, setDimensions] = useState({
-        width: 800,
+        width: 200,
         height: dimHeight,
         margin: { top: 40, right: 20, bottom: 60, left: 60 },
     });
@@ -242,7 +243,7 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
         const { width, height, margin } = dimensions;
 
         // Fallback for very narrow charts
-        const MIN_WIDTH = 300;
+        const MIN_WIDTH = 150;
         const chartWidth = Math.max(width - margin.left - margin.right, MIN_WIDTH);
         const chartHeight = height - margin.top - margin.bottom;
 
@@ -300,8 +301,6 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
             .attr("y", -margin.top + 20) // Position above the X-axis
             .text("Itemsets \\ Support");
 
-
-
         // Draw Bars
         const bars = chartGroup.selectAll(".bar").data(sortedData, d => d.label);
 
@@ -323,7 +322,7 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
                     // Position the tooltip at the mouse's location
                     d3.select(tooltipRef.current)
                         .style("left", `${mouseX + 95}px`) // Add offset to avoid it being directly under the cursor
-                        .style("top", `${mouseY + 90}px`); // Add offset
+                        .style("top", `${mouseY + 110}px`); // Add offset
                 })
             })
             .on("mouseout", (event) => {
@@ -361,9 +360,9 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
     return (
         <div style={{ position: "relative" }}>
             <div style={{ marginBottom: "10px" }}>
-                <button onClick={() => sortData("support")}>Sort by Support</button>
-                <button onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
-                <button onClick={() => sortData("length")}>Sort by Length</button>
+                <button className="sort-button" onClick={() => sortData("support")}>Sort by Support</button>
+                <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
+                <button className="sort-button" onClick={() => sortData("length")}>Sort by Itemset-Size</button>
             </div>
             <div ref={svgContainerRef} style={{ width: "100%", height: "100%" }}>
                 <svg ref={svgRef}>
@@ -391,3 +390,259 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
         </div>
     );
 };
+
+export const DiffChart = ({ data, sizeOfData }) => {
+    const svgRef = useRef(); // Ref for the SVG element
+    const tooltipRef = useRef(); // Ref for the tooltip div
+    //const lenOfData = data && typeof data.length === "number" ? data.length : 0
+    const [dimHeight, setDimHeight] = useState(Math.max(350, 100 + sizeOfData * 17))
+    const [dimensions, setDimensions] = useState({
+        width: 800,
+        height: dimHeight,
+        margin: { top: 30, right: 20, bottom: 60, left: 60 },
+    });
+    const svgContainerRef = useRef();
+    const [sortedData, setSortedData] = useState([]);
+    useEffect(() => {
+        // Initialize sortedData with the input data
+        setSortedData(data);
+        setDimHeight(Math.max(350, 100 + sizeOfData * 17))
+    }, [data]);
+
+    useEffect(() => {
+        if (sortedData && sortedData.length > 0) {
+            drawChart();
+        }
+    }, [sortedData, dimensions]); // Trigger on data or dimensions change
+
+    useEffect(() => {
+        const container = svgContainerRef.current;
+
+        // Debounced function
+        const debouncedResizeHandler = debounce(() => {
+            if (container) {
+                setDimensions((prev) => ({
+                    ...prev,
+                    width: container.offsetWidth,
+                    height: dimHeight, // Or calculate dynamically if needed
+                }));
+            }
+        }, 200); // 200ms delay
+
+        const resizeObserver = new ResizeObserver(debouncedResizeHandler);
+        if (container) resizeObserver.observe(container);
+
+        return () => {
+            resizeObserver.disconnect();
+            debouncedResizeHandler.cancel(); // Cancel any pending debounced calls
+        };
+    }, [dimHeight]);
+
+    const drawChart = () => {
+        const { width, height, margin } = dimensions;
+
+        const MIN_WIDTH = 300;
+        const chartWidth = Math.max(width - margin.left - margin.right, MIN_WIDTH);
+        const chartHeight = height - margin.top - margin.bottom;
+
+        const svg = d3.select(svgRef.current)
+            .attr("width", width)
+            .attr("height", height);
+
+        let chartGroup = svg.select("g.chart-group");
+        if (chartGroup.empty()) {
+            chartGroup = svg.append("g")
+                .attr("class", "chart-group")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        }
+
+        // X-Scale: Symmetric around 0 for left/right bars
+        const maxAbsValue = 1//d3.max(sortedData.flatMap(d => [Math.abs(d.leftValue), Math.abs(d.rightValue)])) || 1;
+        const xScale = d3.scaleLinear()
+            .domain([-maxAbsValue, maxAbsValue]) // Negative to positive
+            .range([0, chartWidth]);
+
+        // Y-Scale: Bands for each label
+        const yScale = d3.scaleBand()
+            .domain(sortedData.map(d => d.label)) // Use sortedData labels
+            .range([0, chartHeight])
+            .padding(0.1);
+
+        // Axes
+        const xAxis = d3.axisTop(xScale).tickPadding(10)//axisBottom(xScale).ticks(5);
+        const yAxis = d3.axisLeft(yScale); // Vertical axis on the left
+
+        // Render X-axis
+        let xAxisGroup = chartGroup.select(".x-axis");
+        if (xAxisGroup.empty()) {
+            xAxisGroup = chartGroup.append("g").attr("class", "x-axis");
+        }
+        xAxisGroup
+            .attr("transform", `translate(0, 0)`)//${chartHeight})`) // Position at the bottom
+            .call(xAxis);
+
+        // Render Y-axis
+        let yAxisGroup = chartGroup.select(".y-axis");
+        if (yAxisGroup.empty()) {
+            yAxisGroup = chartGroup.append("g").attr("class", "y-axis");
+        }
+        yAxisGroup
+            .call(yAxis);
+
+        // Bars
+        const bars = chartGroup.selectAll(".bar-group").data(sortedData, d => d.label);
+
+        // Enter: Bar groups for left and right bars
+        const barGroups = bars.enter()
+            .append("g")
+            .attr("class", "bar-group");
+
+        // Left bars
+        barGroups.append("rect")
+            .attr("class", "bar-left")
+            .merge(bars.select(".bar-left")) // Merge existing left bars
+            .transition()
+            .duration(1000)
+            .attr("x", d => xScale(-Math.min(d.leftValue, d.rightValue))) // Start at calculated left position
+            .attr("y", d => yScale(d.label))
+            .attr("width", d => xScale(Math.min(d.leftValue, d.rightValue)) - xScale(0))
+            .attr("height", yScale.bandwidth()) // Full bar height
+            .style("fill", "#ff6f61") // Left bar color
+
+        // Right bars
+        barGroups.append("rect")
+            .attr("class", "bar-right")
+            .merge(bars.select(".bar-right")) // Merge existing right bars
+            .transition()
+            .duration(1000)
+            .attr("x", xScale(0)) // Start at the middle
+            .attr("y", d => yScale(d.label))
+            .attr("width", d => Math.abs(xScale(Math.min(d.leftValue, d.rightValue)) - xScale(0)))
+            .attr("height", yScale.bandwidth()) // Full bar height
+            .style("fill", "#69b3a2") // Right bar color
+
+        // Diff bars in blue
+        barGroups.append("rect")
+            .attr("class", "bar-diff")
+            .merge(bars.select(".bar-diff")) // Merge existing diff bars
+            .transition()
+            .duration(1000)
+            .attr("x", d => d.leftValue > d.rightValue ? xScale(-d.leftValue) : xScale(d.leftValue))
+            .attr("y", d => yScale(d.label))
+            .attr("width", d => xScale(Math.abs(d.rightValue - d.leftValue)) - xScale(0))
+            .attr("height", yScale.bandwidth()) // Full bar height
+            .style("fill", "#1338BE") // Diff bar color
+
+        // Add event listeners for interactivity
+        barGroups.select(".bar-left")
+            .on("mouseover", (event, d) => {
+                d3.select(event.currentTarget).style("fill", "#ffa726");
+                d3.select(tooltipRef.current)
+                    .style("opacity", 1)
+                    .html(`Left Value: ${d.leftValue}`);
+            })
+            .on("mousemove", (event) => {
+                const [mouseX, mouseY] = d3.pointer(event);
+                d3.select(tooltipRef.current)
+                    .style("left", `${mouseX + 95}px`)
+                    .style("top", `${mouseY + 110}px`);
+            })
+            .on("mouseout", (event) => {
+                d3.select(event.currentTarget).style("fill", "#ff6f61");
+                d3.select(tooltipRef.current).style("opacity", 0);
+            });
+
+        barGroups.select(".bar-right")
+            .on("mouseover", (event, d) => {
+                d3.select(event.currentTarget).style("fill", "#4caf50");
+                d3.select(tooltipRef.current)
+                    .style("opacity", 1)
+                    .html(`Right Value: ${d.rightValue}`);
+            })
+            .on("mousemove", (event) => {
+                const [mouseX, mouseY] = d3.pointer(event);
+                d3.select(tooltipRef.current)
+                    .style("left", `${mouseX + 95}px`)
+                    .style("top", `${mouseY + 110}px`);
+            })
+            .on("mouseout", (event) => {
+                d3.select(event.currentTarget).style("fill", "#69b3a2");
+                d3.select(tooltipRef.current).style("opacity", 0);
+            });
+
+        barGroups.select(".bar-diff")
+            .on("mouseover", (event, d) => {
+                d3.select(event.currentTarget).style("fill", "#FCE205");
+                d3.select(tooltipRef.current)
+                    .style("opacity", 1)
+                    .html(`Difference between values: ${Math.abs(d.rightValue - d.leftValue)}`);
+            })
+            .on("mousemove", (event) => {
+                const [mouseX, mouseY] = d3.pointer(event);
+                d3.select(tooltipRef.current)
+                    .style("left", `${mouseX + 95}px`)
+                    .style("top", `${mouseY + 110}px`);
+            })
+            .on("mouseout", (event) => {
+                d3.select(event.currentTarget).style("fill", "#1338BE");
+                d3.select(tooltipRef.current).style("opacity", 0);
+            });
+        // Remove old bars
+        bars.exit().remove();
+    };
+
+    const sortData = (type) => {
+        let newData;
+        if (type === "alphabetical") {
+            newData = [...sortedData].sort((a, b) => a.label.localeCompare(b.label));
+        } else if (type === "size") {
+            newData = [...sortedData].sort((a, b) => {
+                const countA = (a.label.match(/&/g) || []).length;
+                const countB = (b.label.match(/&/g) || []).length;
+                return countA - countB || b.leftValue - a.leftValue; // First by & count, then by value
+            });
+        } else if (type === "support") {
+            newData = [...sortedData].sort((a, b) => Math.abs(b.leftValue - b.rightValue) - Math.abs(a.leftValue - a.rightValue));
+        } else if (type === "leftsupport") {
+            newData = [...sortedData].sort((a, b) => b.leftValue - a.leftValue);
+        } else if (type === "rightsupport") {
+            newData = [...sortedData].sort((a, b) => b.rightValue - a.rightValue);
+        }
+        setSortedData(newData); // Update sortedData
+    };
+
+    return (
+        <div style={{ position: "relative" }}>
+            <div style={{ marginBottom: "10px" }}>
+                <button className="sort-button" onClick={() => sortData("support")}>Sort by Difference in Support</button>
+                <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
+                <button className="sort-button" onClick={() => sortData("size")}>Sort by Itemset-Size</button>
+                <button className="sort-button" onClick={() => sortData("leftsupport")}>Sort by Left Support</button>
+                <button className="sort-button" onClick={() => sortData("rightsupport")}>Sort by Right Support</button>
+            </div>
+            <div ref={svgContainerRef} style={{ width: "100%", height: "100%" }}>
+                <svg ref={svgRef}>
+                    <g className="x-axis"></g>
+                    <g className="y-axis"></g>
+                </svg>
+            </div>
+            <div
+                ref={tooltipRef}
+                style={{
+                    position: "absolute",
+                    background: "#fff",
+                    border: "1px solid #ccc",
+                    padding: "5px 10px",
+                    borderRadius: "5px",
+                    pointerEvents: "none",
+                    opacity: 0,
+                    transition: "opacity 0.2s ease",
+                    zIndex: 10,
+                    fontSize: '12px',
+                    color: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                }}
+            ></div>
+        </div>
+    );
+}
