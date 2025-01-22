@@ -145,7 +145,7 @@ const ScriptExecutor = () => {
     });
     const [studentsBasis, setStudentsBasis] = useState(false)
     const [binsBool, setBinsBool] = useState(false)
-    const [binsArr, setBinsArr] = useState(['5.0'])
+    const [binsArr, setBinsArr] = useState(['1.7', '2.7', '3.7', '4.0', '5.0'])
     const [currentBin, setCurrentBin] = useState('1.0')
     const resetRemainingGrades = () => {
         const filteredEntries = Object.entries(marksObj).filter(
@@ -164,6 +164,7 @@ const ScriptExecutor = () => {
         const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
+        const binsBooleanForAlgorithm = values.at(1) === "Grades" ? binsBool : false
         try {
             // Execute the python script
             response = await axios.post('http://localhost:5000/execute', {
@@ -180,7 +181,8 @@ const ScriptExecutor = () => {
                 },
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
                 studentsBasisBoolean: studentsBasis,
-                binsBoolean: values.at(1) === "Grades" ? binsBool : false
+                binsBoolean: binsBooleanForAlgorithm,
+                binsArray: binsArr
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -235,6 +237,10 @@ const ScriptExecutor = () => {
 
             // Fine tune data based on the algorithm that was selected
             let lastExecuted = -1
+            // Apply renaming if bins were applied
+            if (binsBooleanForAlgorithm) {
+                onlyOutput = renameOutputToBinsName(onlyOutput)
+            }
             if (selectedValues.at(-1) === 'Sequence Patterns') {
                 icicleData = buildIcicleHierarchySeqPats(onlyOutput);
                 lastExecuted = 2
@@ -434,6 +440,25 @@ const ScriptExecutor = () => {
     const handleDeleteBin = (index) => {
         setBinsArr(binsArr.slice(0, index).concat(binsArr.slice(index + 1)))
     }
+    const renameOutputToBinsName = (data) => {
+        const renameDataObj = {}
+        const numRows = binsArr.length
+        for (let i = 0; i < numRows; i++) {
+            const inputElement = document.getElementById(`row-${i}`);
+            console.log(inputElement)
+            if (inputElement) {
+                renameDataObj[`${i + 1}.0`] = inputElement.value || `${i + 1}`;
+            }
+        }
+        return data.map((str) => {
+            Object.keys(renameDataObj).forEach((key) => {
+                if (str.includes(key)) {
+                    str = str.replace(new RegExp(key, "g"), renameDataObj[key]);
+                }
+            });
+            return str;
+        });
+    }
 
     return (
         <div className="container">
@@ -482,13 +507,24 @@ const ScriptExecutor = () => {
                                     Put values into bins
                                 </label>
                                 {binsBool ? <>
-                                    <label>Current Bins:</label>
-                                    {
-                                        binsArr.map((item, index) =>
-                                            <div className="next-to-each-other" key={(index + 1) * 3}><label key={(index + 1) * 2}> {getBinOfItem(item, index)}
-                                            </label>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}
-                                            </div>)
-                                    }
+                                    <h4>Current Bins:</h4>
+                                    <table className="bins-table">
+                                        <tr>
+                                            <th>Name of bin</th>
+                                            <th>Content</th>
+                                        </tr>
+                                        {
+                                            binsArr.map((item, index) =>
+                                                <tr key={(index + 1) * 4}>
+                                                    {/*<div className="next-to-each-other" key={(index + 1) * 3}><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label>*/}
+                                                    {/*index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</div>*/}
+                                                    <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
+                                                    <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
+                                                    <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</th>
+                                                </tr>)
+                                        }
+                                    </table>
+
                                     <div className="below-div"><Slider
                                         range
                                         min={0}

@@ -24,6 +24,7 @@ def execute_script():
     checkbox_data = data.get("checkBoxData")
     students_basis_boolean = data.get("studentsBasisBoolean")
     bins_bool = data.get("binsBoolean")
+    bins_arr = data.get("binsArray")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -39,6 +40,7 @@ def execute_script():
         "CHECKBOX_DATA": ",".join(checkbox_data),
         "STUDENTS_BASIS_BOOL": str(students_basis_boolean),
         "BINS_BOOL": str(bins_bool),
+        "BINS_ARRAY": str(bins_arr),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")
