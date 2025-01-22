@@ -1,7 +1,7 @@
 import pandas as pd
 import csv
 from .definitions import (
-    aggregate_grades,
+    create_aggregate_grades,
     aggregate_courses,
     not_passed_prefix,
     mandatory_courses_arr,
@@ -19,6 +19,7 @@ def preprocess_csv(
     fe_bool_passed_courses,
     fe_column_values,
     fe_checkbox_data,
+    fe_bins_array,
 ):
     work = pd.read_csv(csv)
 
@@ -38,6 +39,7 @@ def preprocess_csv(
         if fe_bool_courses:
             work["course"] = work["course"].replace(aggregate_courses)
         else:
+            aggregate_grades = create_aggregate_grades(fe_bins_array)
             work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
 
     # Only students who passed all courses at RWTH

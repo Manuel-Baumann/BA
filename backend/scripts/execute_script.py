@@ -68,6 +68,7 @@ def execute_script_func(
     fe_checkbox_data,
     fe_students_basis_bool,
     fe_bins_bool,
+    fe_bins_array,
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -148,6 +149,7 @@ def execute_script_func(
         fe_bool_passed_courses,
         fe_column_values,
         fe_checkbox_data,
+        fe_bins_array,
     )
     if work is None or work.empty or work.shape[0] == 0:
         print("WARNING: Empty dataset!")
