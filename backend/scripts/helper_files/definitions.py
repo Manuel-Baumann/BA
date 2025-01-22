@@ -92,3 +92,7 @@ def create_aggregate_grades(bins_array):
     # for key, value in aggregate_grades.items():
     #    print("key, value", key, value)
     return aggregate_grades
+
+
+def check_if_mandatory(course_name):
+    return course_name in mandatory_courses_dict

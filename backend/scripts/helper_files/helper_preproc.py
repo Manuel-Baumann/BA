@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 from .definitions import (
     create_aggregate_grades,
+    check_if_mandatory,
     aggregate_courses,
     not_passed_prefix,
     mandatory_courses_arr,
@@ -20,6 +21,7 @@ def preprocess_csv(
     fe_column_values,
     fe_checkbox_data,
     fe_bins_array,
+    fe_only_mandatory_boolean,
 ):
     work = pd.read_csv(csv)
 
@@ -37,10 +39,16 @@ def preprocess_csv(
 
     if bins_bool:
         if fe_bool_courses:
+            # Will never be reached since bins_bool is always false if courses were picked
             work["course"] = work["course"].replace(aggregate_courses)
         else:
             aggregate_grades = create_aggregate_grades(fe_bins_array)
             work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
+    if fe_only_mandatory_boolean:
+        print("fe_only_mandatory_boolean")
+        work["course"] = work["course"].apply(
+            lambda course: ("Mandatory" if check_if_mandatory(course) else "Optional")
+        )
 
     # Only students who passed all courses at RWTH
     if not fe_bool_all_students:

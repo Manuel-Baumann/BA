@@ -32,6 +32,7 @@ try:
     students_basis_bool = os.getenv("STUDENTS_BASIS_BOOL")
     bins_bool = os.getenv("BINS_BOOL")
     bins_array = os.getenv("BINS_ARRAY")
+    only_mandatory_boolean = os.getenv("ONLY_MANDATORY_BOOLEAN")
 
     # Example usage of the values
 
@@ -88,6 +89,7 @@ try:
         students_basis_bool,
         bins_bool,
         bins_array,
+        only_mandatory_boolean,
     )
 
 except Exception as e:

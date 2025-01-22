@@ -43,6 +43,7 @@ TRUNCATE_OUTPUT = 100  # Lines of output that will be shown / vizualized
 BINS_BOOL = False
 USE_S_OR_Y_AS_BASIS_FOR_FI_AR = True
 REMOVE_ALL_MAND_COURSES_FI = False
+ONLY_MANDATORY_BOOLEAN = False
 
 work_renamed = "./csv/work_renamed.csv"
 algo_name = ""
@@ -69,6 +70,7 @@ def execute_script_func(
     fe_students_basis_bool,
     fe_bins_bool,
     fe_bins_array,
+    fe_only_mandatory_boolean,
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -127,6 +129,7 @@ def execute_script_func(
         print("Automatic minimum confidence:", global_min_conf)
     global USE_S_OR_Y_AS_BASIS_FOR_FI_AR
     global BINS_BOOL
+    global ONLY_MANDATORY_BOOLEAN
     if fe_students_basis_bool == "False":
         USE_S_OR_Y_AS_BASIS_FOR_FI_AR = True
     else:
@@ -135,6 +138,9 @@ def execute_script_func(
         BINS_BOOL = True
     else:
         BINS_BOOL = False
+    if fe_only_mandatory_boolean == "True":
+        ONLY_MANDATORY_BOOLEAN = True
+
     # renaming()
 
     ######################  Process input csv file  ############################
@@ -150,6 +156,7 @@ def execute_script_func(
         fe_column_values,
         fe_checkbox_data,
         fe_bins_array,
+        ONLY_MANDATORY_BOOLEAN,
     )
     if work is None or work.empty or work.shape[0] == 0:
         print("WARNING: Empty dataset!")

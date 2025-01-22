@@ -157,6 +157,7 @@ const ScriptExecutor = () => {
         return result;
     }
     const [remainingGradesObj, setRemainingGradesObj] = useState(resetRemainingGrades())
+    const [onlyMandatoryBool, setOnlyMandatoryBool] = useState(false)
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -182,7 +183,8 @@ const ScriptExecutor = () => {
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
                 studentsBasisBoolean: studentsBasis,
                 binsBoolean: binsBooleanForAlgorithm,
-                binsArray: binsArr
+                binsArray: binsArr,
+                onlyMandatoryBoolean: onlyMandatoryBool
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -465,6 +467,9 @@ const ScriptExecutor = () => {
             return supportAndConfidence ? `${updatedRule}${supportAndConfidence}` : updatedRule;
         });
     }
+    const handleOnlyMandatoryBoolChange = () => {
+        setOnlyMandatoryBool((prev) => !prev)
+    }
 
     return (
         <div className="container">
@@ -522,11 +527,9 @@ const ScriptExecutor = () => {
                                         {
                                             binsArr.map((item, index) =>
                                                 <tr key={(index + 1) * 4}>
-                                                    {/*<div className="next-to-each-other" key={(index + 1) * 3}><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label>*/}
-                                                    {/*index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</div>*/}
                                                     <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
                                                     <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
-                                                    <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Bin löschen</button> : null}</th>
+                                                    <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Delete bin</button> : null}</th>
                                                 </tr>)
                                         }
                                     </table>
@@ -544,6 +547,10 @@ const ScriptExecutor = () => {
                                 </> : null}
                             </div>
                         </div> : null}
+                        {selectedValues.at(1) === "Courses" && group.groupName === 'Select the type of academic data' ? <div key="OnlyMandatoryBool">
+                            <label><input type="checkbox" name="Categorise courses: Mandatory / Not mandatory" checked={onlyMandatoryBool} onChange={handleOnlyMandatoryBoolChange} />Categorise courses: Mandatory / Not mandatory</label>
+                        </div>
+                            : null}
                     </div>
 
                 ))}

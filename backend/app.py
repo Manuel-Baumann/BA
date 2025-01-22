@@ -25,6 +25,7 @@ def execute_script():
     students_basis_boolean = data.get("studentsBasisBoolean")
     bins_bool = data.get("binsBoolean")
     bins_arr = data.get("binsArray")
+    only_mandatory_boolean = data.get("onlyMandatoryBoolean")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -41,6 +42,7 @@ def execute_script():
         "STUDENTS_BASIS_BOOL": str(students_basis_boolean),
         "BINS_BOOL": str(bins_bool),
         "BINS_ARRAY": str(bins_arr),
+        "ONLY_MANDATORY_BOOLEAN": str(only_mandatory_boolean),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")
