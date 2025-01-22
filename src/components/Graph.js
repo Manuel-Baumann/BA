@@ -539,7 +539,7 @@ export const DiffChart = ({ data, sizeOfData }) => {
                 d3.select(event.currentTarget).style("fill", "#ffa726");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Left Value: ${d.leftValue}`);
+                    .html(`Left Value: ${parseFloat(d.leftValue).toFixed(4)}`);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);
@@ -557,7 +557,7 @@ export const DiffChart = ({ data, sizeOfData }) => {
                 d3.select(event.currentTarget).style("fill", "#4caf50");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Right Value: ${d.rightValue}`);
+                    .html(`Right Value: ${parseFloat(d.rightValue).toFixed(4)}`);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);

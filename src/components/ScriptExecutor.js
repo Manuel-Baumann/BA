@@ -786,9 +786,9 @@ const ScriptExecutor = () => {
                 <><hr />
                     <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{diffOutputLeft}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} /></div> : <></>}</pre>
-                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
-                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{diffOutputRight}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{/*diffOutputLeft*/}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} /></div> : <></>}</pre>
+                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{/*diffOutputMiddle*/}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
+                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
                     </div></>
             ) : lastExecuted1 === lastExecuted2 && lastExecuted1 === 0 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }
