@@ -320,26 +320,7 @@ const ScriptExecutor = () => {
             const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1] }))
             const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1] }))
             // console.log(split1, split2, setOfStrings1, setOfStrings2)
-            /*
-            
-                    for (let i = 0; i < len1; i++) {
-                        if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                            split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                            setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                        } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                            split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                            setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                        }
-                    }
-                    for (let i = 0; i < len2; i++) {
-                        if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                            split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                            setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                        } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                            split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                            setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                        }
-                    }*/
+
 
             const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
             const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
@@ -358,6 +339,28 @@ const ScriptExecutor = () => {
             setDiffOutputMiddle(o2.join('\n'));
             setDiffOutputRight(o3.join('\n'));
             setShowDiffBool(true)
+        }
+        else {
+            console.log("Diff beween Association Rules and Sequence Patterns")
+            /*
+            for (let i = 0; i < len1; i++) {
+                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
+                }
+            }
+            for (let i = 0; i < len2; i++) {
+                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
+                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
+                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
+                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
+                }
+            }*/
         }
     };
 
@@ -445,18 +448,21 @@ const ScriptExecutor = () => {
         const numRows = binsArr.length
         for (let i = 0; i < numRows; i++) {
             const inputElement = document.getElementById(`row-${i}`);
-            console.log(inputElement)
             if (inputElement) {
-                renameDataObj[`${i + 1}.0`] = inputElement.value || `${i + 1}`;
+                renameDataObj[`${i + 1}.0`] = inputElement.value || inputElement.placeholder;
             }
         }
         return data.map((str) => {
+            const firstHashIndex = str.indexOf('#')
+            const rule = str.slice(0, firstHashIndex)
+            const supportAndConfidence = str.slice(firstHashIndex)
+            let updatedRule = rule
             Object.keys(renameDataObj).forEach((key) => {
-                if (str.includes(key)) {
-                    str = str.replace(new RegExp(key, "g"), renameDataObj[key]);
+                if (updatedRule.includes(key)) {
+                    updatedRule = updatedRule.replace(new RegExp(key, "g"), renameDataObj[key]);
                 }
             });
-            return str;
+            return supportAndConfidence ? `${updatedRule}${supportAndConfidence}` : updatedRule;
         });
     }
 
@@ -660,8 +666,8 @@ const ScriptExecutor = () => {
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} />
                             </div>}
-                        <h3>Output:</h3>
-                        <pre>{output1}</pre>
+                        {/*<h3>Output as text:</h3>
+                        <pre>{output1}</pre>*/}
                     </div>
                 </div>
 
@@ -767,8 +773,8 @@ const ScriptExecutor = () => {
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
                                 <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} />
                             </div>}
-                        <h3>Output:</h3>
-                        <pre>{output2}</pre>
+                        {/*<h3>Output as text:</h3>
+                        <pre>{output2}</pre>*/}
                     </div>
                 </div>
             </div>
