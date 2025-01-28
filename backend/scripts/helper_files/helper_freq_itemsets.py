@@ -58,7 +58,7 @@ def execute_freq_itemset_algorithm(
                 '"""POSTPROCESSING"""Frequent Itemsets including grade 0.0 were removed.'
             )
             frequent_itemset = frequent_itemset[
-                ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
+                ~frequent_itemset["itemsets"].apply(lambda x: "0.0" in str(x))
             ]
         if frequent_itemset.shape[0] == 0:
             print("WARNING: No frequent itemsets with given minimum support found.")

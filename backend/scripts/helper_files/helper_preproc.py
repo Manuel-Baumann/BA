@@ -37,19 +37,6 @@ def preprocess_csv(
     if fe_column_values[4] != "All":
         work = work[work["subject"] == fe_column_values[4]]
 
-    if bins_bool:
-        if fe_bool_courses:
-            # Will never be reached since bins_bool is always false if courses were picked
-            work["course"] = work["course"].replace(aggregate_courses)
-        else:
-            aggregate_grades = create_aggregate_grades(fe_bins_array)
-            work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
-    if fe_only_mandatory_boolean:
-        print("fe_only_mandatory_boolean")
-        work["course"] = work["course"].apply(
-            lambda course: ("Mandatory" if check_if_mandatory(course) else "Optional")
-        )
-
     # Only students who passed all courses at RWTH
     if not fe_bool_all_students:
         in_between_step = work[
@@ -114,6 +101,30 @@ def preprocess_csv(
         )
     print("Mean grade of mean grade of all students:", mean_range["mean_score"].mean())
 
+    # Apply bins and categorise into mandatory/optional
+    if bins_bool:
+        if fe_bool_courses:
+            # Will never be reached since bins_bool is always false if courses were picked
+            work["course"] = work["course"].replace(aggregate_courses)
+        else:
+            aggregate_grades = create_aggregate_grades(fe_bins_array)
+            work["grade"] = work["grade"].apply(lambda x: aggregate_grades.get(x, x))
+    if fe_only_mandatory_boolean:
+        if fe_bool_courses:
+            work["course"] = work["course"].apply(
+                lambda course: (
+                    "Mandatory" if check_if_mandatory(course) else "Optional"
+                )
+            )
+        else:
+            work["grade"] = work.apply(
+                lambda row: (
+                    ("Mandatory: " + str(row["grade"]))
+                    if check_if_mandatory(row["course"])
+                    else ("Optional: " + str(row["grade"]))
+                ),
+                axis=1,
+            )
     return work
 
 

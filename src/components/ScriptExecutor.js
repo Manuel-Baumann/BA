@@ -7,6 +7,7 @@ import '../css/ScriptExecutor.css';
 import { buildFrequentItemsetHierarchy } from './helperFunctionsFreqItemsets';
 import { buildAssRulesIcicleHierarchy } from './helperFunctionsAssRules';
 import { buildIcicleHierarchySeqPats } from './helperFunctionsSeqPatterns';
+import GradeLine from './GradeLine';
 
 // New data structure for dynamic radio button groups
 // values: [options1, options2, ...]
@@ -432,7 +433,6 @@ const ScriptExecutor = () => {
                 else if (grade === currentBin) return prev;
                 else break;
             }
-            // Create a new array to ensure immutability
             const updatedBinsArr = [...prev.slice(0, insertIndex), currentBin, ...prev.slice(insertIndex)];
             return updatedBinsArr;
         });
@@ -506,6 +506,10 @@ const ScriptExecutor = () => {
                                 </label>
                             </div>
                         </div> : null}
+                        {group.groupName === 'Select the type of academic data' ? <div key="OnlyMandatoryBool">
+                            <label><input type="checkbox" name="Categorise: Mandatory / Optional" checked={onlyMandatoryBool} onChange={handleOnlyMandatoryBoolChange} />Categorise: Mandatory / Optional</label>
+                        </div>
+                            : null}
                         {selectedValues.at(1) === "Grades" && group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
                             <div key="Put values into bins">
                                 <label>
@@ -547,10 +551,6 @@ const ScriptExecutor = () => {
                                 </> : null}
                             </div>
                         </div> : null}
-                        {selectedValues.at(1) === "Courses" && group.groupName === 'Select the type of academic data' ? <div key="OnlyMandatoryBool">
-                            <label><input type="checkbox" name="Categorise courses: Mandatory / Not mandatory" checked={onlyMandatoryBool} onChange={handleOnlyMandatoryBoolChange} />Categorise courses: Mandatory / Not mandatory</label>
-                        </div>
-                            : null}
                     </div>
 
                 ))}
