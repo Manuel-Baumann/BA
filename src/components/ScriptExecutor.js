@@ -522,22 +522,24 @@ const ScriptExecutor = () => {
                                     Put values into bins
                                 </label>
                                 {binsBool ? <>
-                                    <h4>Current Bins:</h4>
-                                    <table className="bins-table">
-                                        <tr>
-                                            <th>Name of bin</th>
-                                            <th>Content</th>
-                                        </tr>
-                                        {
-                                            binsArr.map((item, index) =>
-                                                <tr key={(index + 1) * 4}>
-                                                    <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
-                                                    <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
-                                                    <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Delete bin</button> : null}</th>
-                                                </tr>)
-                                        }
-                                    </table>
 
+                                    <GradeLine addBinHandler={addBinHandler} handleDeleteBin={handleDeleteBin} binsArr={binsArr} setBinsArr={setBinsArr} allGrades={allGrades} setCurrentBin={setCurrentBin} currentBin={currentBin} />
+                                    <table className="bins-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>Name of bin</th>
+                                                <th>Content</th>
+                                            </tr>
+                                            {
+                                                binsArr.map((item, index) =>
+                                                    <tr key={(index + 1) * 4}>
+                                                        <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
+                                                        <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
+                                                        {/* <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Delete bin</button> : null}</th> */}
+                                                    </tr>)
+                                            }</tbody>
+                                    </table>
+                                    {/*
                                     <div className="below-div"><Slider
                                         range
                                         min={0}
@@ -548,6 +550,7 @@ const ScriptExecutor = () => {
                                     /></div>
                                     {Object.values(remainingGradesObj).length > 0 ? <div className="below-div">
                                         <button className="execute-button" onClick={() => addBinHandler()}>Add bin</button></div> : null}
+                                         */}
                                 </> : null}
                             </div>
                         </div> : null}

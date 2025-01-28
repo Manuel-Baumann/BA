@@ -1,0 +1,71 @@
+.grade-line-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%; /* Make it take up 100% of the parent's width */
+    max-width: 400px; /* Set the maximum width */
+    margin: 8px auto; /* Center the container and add vertical margin */
+}
+
+.grade-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+.grade-item {
+    display: flex;
+    flex-direction: row; /* Align items horizontally (side by side) */
+    align-items: center; /* Vertically center align the content */
+    margin-right: 1px; /* Space between each grade item */
+    margin-left: 1px; /* Space between each grade item */
+}
+
+.grade-marker {
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 1px; /* Space between the grade and the red line/button */
+}
+
+.between-grade {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center-align button and red line */
+    position: relative;
+}
+
+.red-line {
+    width: 3px; /* Red line width (adjust as needed) */
+    height: 20px;
+    background-color: red;
+    margin-bottom: 2px; /* Space between red line and button */
+}
+
+.action-button {
+    margin-top: 2px;
+    padding: 5px 10px;
+    font-size: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.action-button:hover {
+    background-color: #0056b3;
+}
+
+.invisible-box {
+    width: 100%;
+    height: 30px; /* Invisible box height */
+    background-color: transparent; /* Make the box invisible */
+}
+
+.black-line {
+    width: 100%;
+    height: 20px;
+    background-color: transparent;
+}
