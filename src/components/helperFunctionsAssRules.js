@@ -1,7 +1,7 @@
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
 // // // // // // // // // // // //    Association rules    // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-function addToAssRulesTreeIcicle(tree, steps, support, confidence) {
+function addToAssRulesTreeIcicle(tree, steps, support, confidence, basisForSupportFromOutput, basisForWholeDataSet) {
     let currentNode = tree;
 
     // For each step in the sequence
@@ -13,12 +13,15 @@ function addToAssRulesTreeIcicle(tree, steps, support, confidence) {
 
         // If the step doesn't exist yet at this level, create it
         if (!childNode) {
+            const sup = index === steps.length - 1 ? support : 0
+            const supWithDifferentBase = sup === 0 ? 0 : sup * basisForSupportFromOutput / basisForWholeDataSet
             childNode = {
                 name: step,
                 children: [],
-                size: index === steps.length - 1 ? support : 0,
-                support: index === steps.length - 1 ? support : 0,
-                confidence: index === steps.length - 1 ? confidence : 0
+                size: sup,
+                support: sup,
+                confidence: index === steps.length - 1 ? confidence : 0,
+                supportWithDifferentBase: supWithDifferentBase
             };
             currentNode.children.push(childNode);
         } else {
@@ -37,7 +40,7 @@ function addToAssRulesTreeIcicle(tree, steps, support, confidence) {
     });
 }
 
-export const buildAssRulesIcicleHierarchy = (patterns) => {
+export const buildAssRulesIcicleHierarchy = (patterns, basisForSupportFromOutput, basisForWholeDataSet) => {
     if (patterns === undefined || patterns == [] || patterns.length === 0) {
         return buildAssRulesIcicleHierarchy(["Empty dataset #SUP: 1 #CONF: 1"]);
     }
@@ -59,7 +62,7 @@ export const buildAssRulesIcicleHierarchy = (patterns) => {
 
     // Add sorted patterns to the tree
     parsedData.forEach(({ steps, support, confidence }) => {
-        addToAssRulesTreeIcicle(root, steps, support, confidence);
+        addToAssRulesTreeIcicle(root, steps, support, confidence, basisForSupportFromOutput, basisForWholeDataSet);
     });
     return root;
 };

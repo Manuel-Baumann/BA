@@ -91,6 +91,9 @@ let sizeOfDiffRightData = 0
 const allGrades = ['1.0', '1.3', '1.7', '2.0', '2.3', '2.7', '3.0', '3.3', '3.7', '4.0', '5.0']
 const marksObj = { 0: '1.0', 1: '1.3', 2: '1.7', 3: '2.0', 4: '2.3', 5: '2.7', 6: '3.0', 7: '3.3', 8: '3.7', 9: '4.0', 10: '5.0' }
 
+const amountOfUniqueStudentsInDatasetGLOBAL = 4260
+const amountOfUniqueSemestersGLOBAL = 13701
+
 const ScriptExecutor = () => {
     const [output1, setOutput1] = useState('');
     const [output2, setOutput2] = useState('');
@@ -109,7 +112,7 @@ const ScriptExecutor = () => {
     const [data2, setData2] = useState({});
     const [lastExecuted1, setLastExecuted1] = useState(-1)
     const [lastExecuted2, setLastExecuted2] = useState(-1)
-    const [numberOfOutputLines, setNumberOfOutputLines] = useState(35);
+    const [numberOfOutputLines, setNumberOfOutputLines] = useState(12);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
         column2: [0, 100]   // Initial min and max values for Column 2
@@ -159,6 +162,9 @@ const ScriptExecutor = () => {
     }
     const [remainingGradesObj, setRemainingGradesObj] = useState(resetRemainingGrades())
     const [onlyMandatoryBool, setOnlyMandatoryBool] = useState(false)
+    const [basisForSupport, setBasisForSupport] = useState(-1)
+    const [basisForSupportLeft, setBasisForSupportLeft] = useState(-1)
+    const [basisForSupportRight, setBasisForSupportRight] = useState(-1)
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -225,6 +231,16 @@ const ScriptExecutor = () => {
                 // Remove all lines from first to last, but leave in important information and the last ======
                 responseLines = responseLines.slice(0, first).concat(responseLines[leaveIn].trim()).concat(responseLines[leaveIn + 1]).concat(responseLines.slice(last + 1));
             }
+
+            // Get basis number of students/semesters (transactions) of algorithm
+            const basisForSupportFromOutput = responseLines.filter(line => line.startsWith('Unique students in dataset'))[0].split(':')[1].trim()
+            setBasisForSupport(basisForSupportFromOutput)
+            if (columnIndex === 1) {
+                setBasisForSupportLeft(basisForSupportFromOutput)
+            } else {
+                setBasisForSupportRight(basisForSupportFromOutput)
+            }
+
             // Filter POSTPROCESSING information and actual output and remove prefix for postprocessing
             const mainOutput = responseLines.filter(line => !line.startsWith('"""POSTPROCESSING"""')).join('\n');
             const preprocOutput = responseLines.filter(line => line.startsWith('"""POSTPROCESSING"""')).map(line => line.slice(20)).join('\n\n');
@@ -245,14 +261,14 @@ const ScriptExecutor = () => {
                 onlyOutput = renameOutputToBinsName(onlyOutput)
             }
             if (selectedValues.at(-1) === 'Sequence Patterns') {
-                icicleData = buildIcicleHierarchySeqPats(onlyOutput);
+                icicleData = buildIcicleHierarchySeqPats(onlyOutput, basisForSupportFromOutput, amountOfUniqueStudentsInDatasetGLOBAL);
                 lastExecuted = 2
             } else if (selectedValues.at(-1) === 'Association Rules') {
-                icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')))
+                icicleData = buildAssRulesIcicleHierarchy(onlyOutput.map(str => str.replace(/==>/g, '=>')), basisForSupportFromOutput, amountOfUniqueStudentsInDatasetGLOBAL)
                 lastExecuted = 1
 
             } else if (selectedValues.at(-1) === 'Frequent Itemsets') {
-                icicleData = buildFrequentItemsetHierarchy(onlyOutput)
+                icicleData = buildFrequentItemsetHierarchy(onlyOutput, basisForSupportFromOutput, amountOfUniqueStudentsInDatasetGLOBAL)
                 lastExecuted = 0
             }
 
@@ -319,9 +335,9 @@ const ScriptExecutor = () => {
             const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
             const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
             const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
-            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({ label: item, leftValue: split1.find(([str]) => str === item)?.[1], rightValue: split2.find(([str]) => str === item)?.[1] }))
-            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1] }))
-            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1] }))
+            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({ label: item, leftValue: split1.find(([str]) => str === item)?.[1], rightValue: split2.find(([str]) => str === item)?.[1], leftValueWithDifferentBasis: parseFloat(split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL), rightValueWithDifferentBasis: parseFloat(split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL) }))
+            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1], valueWithDifferentBase: split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL }))
+            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1], valueWithDifferentBase: split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL }))
             // console.log(split1, split2, setOfStrings1, setOfStrings2)
 
 
@@ -475,6 +491,7 @@ const ScriptExecutor = () => {
         <div className="container">
 
             {/* Dynamic Grouping of RadioButtons */}
+            <h2>Options for both Cohorts</h2>
             <div className="radio-group-container">
                 {radioGroupData.map((group, groupIndex) => (
                     <div key={groupIndex} className="radio-group">
@@ -672,9 +689,9 @@ const ScriptExecutor = () => {
                         {lastExecuted1 !== 0 ?
                             lastExecuted1 === -1 ? <></> :
                                 <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                    <IcicleWithHover data={data1} />
+                                    <IcicleWithHover data={data1} setData={setData1} basisForSupport={basisForSupportLeft} />
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} />
+                                <BarChartWithTransitions data={data1} sizeOfData={sizeOfData1} setData={setData1} basisForSupport={basisForSupportLeft} />
                             </div>}
                         {/*<h3>Output as text:</h3>
                         <pre>{output1}</pre>*/}
@@ -779,9 +796,9 @@ const ScriptExecutor = () => {
                         {lastExecuted2 !== 0 ?
                             lastExecuted2 === -1 ? <></> :
                                 <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                    <IcicleWithHover data={data2} />
+                                    <IcicleWithHover data={data2} setData={setData2} basisForSupport={basisForSupportRight} />
                                 </div> : <div className='graph-container' style={{ width: '80%', height: '80%', margin: '0 auto' }}>
-                                <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} />
+                                <BarChartWithTransitions data={data2} sizeOfData={sizeOfData2} setData={setData2} basisForSupport={basisForSupportRight} />
                             </div>}
                         {/*<h3>Output as text:</h3>
                         <pre>{output2}</pre>*/}
@@ -796,9 +813,9 @@ const ScriptExecutor = () => {
                 <><hr />
                     <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{/*diffOutputLeft*/}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} /></div> : <></>}</pre>
-                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{/*diffOutputMiddle*/}<div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} /></div></pre>
-                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} /></div> : <></>}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{/*diffOutputLeft*/}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} setData={setDiffLeftData} basisForSupport={basisForSupportLeft} /></div> : <></>}</pre>
+                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle ? <div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} setData={setDiffData} basisForSupportLeft={basisForSupportLeft} basisForSupportRight={basisForSupportRight} /></div> : <></>}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} setData={setDiffRightData} basisForSupport={basisForSupportRight} /></div> : <></>}</pre>
                     </div></>
             ) : lastExecuted1 === lastExecuted2 && lastExecuted1 === 0 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }

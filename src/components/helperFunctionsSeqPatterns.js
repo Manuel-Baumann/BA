@@ -1,7 +1,7 @@
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
 // // // // // // // // // // // //    Sequential Patterns  // // // // // // // // // // // // // // // //
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // //
-function addToTreeIcicle(tree, steps, support) {
+function addToTreeIcicle(tree, steps, support, basisForSupportFromOutput, basisForWholeDataSet) {
     let currentNode = tree;
 
     // For each step in the sequence
@@ -13,11 +13,14 @@ function addToTreeIcicle(tree, steps, support) {
 
         // If the step doesn't exist yet at this level, create it
         if (!childNode) {
+            const sup = index === steps.length - 1 ? support : 0
+            const supWithDifferentBase = sup === 0 ? 0 : sup * basisForSupportFromOutput / basisForWholeDataSet
             childNode = {
                 name: step,
                 children: [],
-                size: index === steps.length - 1 ? support : 0,
-                support: index === steps.length - 1 ? support : 0
+                size: sup,
+                support: sup,
+                supportWithDifferentBase: supWithDifferentBase
             };
             currentNode.children.push(childNode);
         } else {
@@ -36,7 +39,7 @@ function addToTreeIcicle(tree, steps, support) {
     });
 }
 
-export const buildIcicleHierarchySeqPats = (patterns) => {
+export const buildIcicleHierarchySeqPats = (patterns, basisForSupportFromOutput, basisForWholeDataSet) => {
     if (patterns === undefined || patterns == [] || patterns.length === 0) {
         console.log("empty: ", buildIcicleHierarchySeqPats(["Empty dataset #SUP:1"]));
         return buildIcicleHierarchySeqPats(["Empty dataset #SUP:1"]);
@@ -55,7 +58,7 @@ export const buildIcicleHierarchySeqPats = (patterns) => {
 
     // Add sorted patterns to the tree
     parsedData.forEach(({ steps, support }) => {
-        addToTreeIcicle(root, steps, support);
+        addToTreeIcicle(root, steps, support, basisForSupportFromOutput, basisForWholeDataSet);
     });
 
     return root;

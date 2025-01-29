@@ -55,7 +55,7 @@ def execute_freq_itemset_algorithm(
                 frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
         elif not bool_courses:
             print(
-                '"""POSTPROCESSING"""Frequent Itemsets including grade 0.0 were removed.'
+                '"""POSTPROCESSING""" Frequent Itemsets including grade 0.0 were removed.'
             )
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: "0.0" in str(x))
@@ -92,7 +92,6 @@ def execute_freq_itemset_algorithm(
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)
             ]
-
         # Print df to output file, so that it can be visualized
         df_to_file_function(frequent_itemset, tmp2)
 

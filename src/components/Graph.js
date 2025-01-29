@@ -4,12 +4,13 @@ import * as d3 from 'd3';
 import debounce from 'lodash.debounce'
 import '../css/Graph.css';
 
-export const IcicleWithHover = ({ data }) => {
+export const IcicleWithHover = ({ data, setData, basisForSupport }) => {
     const ref = useRef();
     const tooltipRef = useRef();
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
     const [hoveredNode, setHoveredNode] = useState(null);
     const [breadcrumbPath, setBreadcrumbPath] = useState([]);
+    const [supportBasedOnSelectedDataset, setSupportBasedOnSelectedDataset] = useState(true)
 
     useEffect(() => {
         const resizeObserver = new ResizeObserver((entries) => {
@@ -23,7 +24,7 @@ export const IcicleWithHover = ({ data }) => {
         }
 
         return () => resizeObserver.disconnect();
-    }, []);
+    }, [supportBasedOnSelectedDataset]);
 
     useEffect(() => {
         try {
@@ -37,6 +38,26 @@ export const IcicleWithHover = ({ data }) => {
             setBreadcrumbPath([]); // Clear breadcrumbs in case of error
         }
     }, [hoveredNode]);
+
+    const handleSwitch = () => {
+        setData((prev) => {
+            let newData = prev
+            switchSupportBaseRecursively(newData)
+            return newData
+        })
+        console.log(data)
+        setSupportBasedOnSelectedDataset((prev) => !prev)
+    }
+    const switchSupportBaseRecursively = (child) => {
+        if (child.support && child.supportWithDifferentBase) {
+            const sup = child.support
+            const supWDB = child.supportWithDifferentBase
+            child.support = supWDB
+            child.supportWithDifferentBase = sup
+            child.size = supWDB
+        }
+        child.children.forEach((c) => switchSupportBaseRecursively(c))
+    }
 
     useEffect(() => {
         if (dimensions.width === 0 || dimensions.height === 0) return;
@@ -180,6 +201,12 @@ export const IcicleWithHover = ({ data }) => {
                     transition: 'opacity 0.2s ease',
                 }}
             />
+            {basisForSupport != 4260 ? supportBasedOnSelectedDataset ?
+                <><div className='switch-gg'>Current support is based on the number of students for whom the current selection applies ({basisForSupport}). It is not based on the number of students in the whole dataset (4260).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Dataset'</button></> : <>
+                    <div className='switch-gg'>Current support is based on the number of students in the whole dataset (4260). It is not based on the number of students for whom the current selection applies ({basisForSupport}).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Current Selection'</button>
+                </> : <></>}
         </div>
     );
 };
@@ -192,7 +219,7 @@ const getHTML = (nodeName, size, remainingSize, depth, confidence) => {
     return depth ? html + `<strong>Depth:</strong> ${depth}` : html
 }
 
-export const BarChartWithTransitions = ({ data, sizeOfData }) => {
+export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSupport }) => {
     const svgRef = useRef(); // Ref for the SVG element
     const tooltipRef = useRef(); // Ref for the tooltip div
     //const lenOfData = data && typeof data.length === "number" ? data.length : 0
@@ -204,6 +231,8 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
     });
     const svgContainerRef = useRef();
     const [sortedData, setSortedData] = useState([]);
+    const [supportBasedOnSelectedDataset, setSupportBasedOnSelectedDataset] = useState(true)
+
     useEffect(() => {
         // Initialize sortedData with the input data
         setSortedData(data);
@@ -237,7 +266,21 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
             resizeObserver.disconnect();
             debouncedResizeHandler.cancel(); // Cancel any pending debounced calls
         };
-    }, [dimHeight]);
+    }, [dimHeight, supportBasedOnSelectedDataset]);
+
+    const handleSwitch = () => {
+        setData((prev) => {
+            let newData = prev
+            for (const child of newData) {
+                const val = child.value
+                const valWDB = child.valueWithDifferentBase
+                child.value = valWDB
+                child.valueWithDifferentBase = val
+            }
+            return newData
+        })
+        setSupportBasedOnSelectedDataset((prev) => !prev)
+    }
 
     const drawChart = () => {
         const { width, height, margin } = dimensions;
@@ -387,11 +430,17 @@ export const BarChartWithTransitions = ({ data, sizeOfData }) => {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
                 }}
             ></div>
+            {basisForSupport != 4260 ? supportBasedOnSelectedDataset ?
+                <><div className='switch-gg'>Current support is based on the number of students for whom the current selection applies ({basisForSupport}). It is not based on the number of students in the whole dataset (4260).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Dataset'</button></> : <>
+                    <div className='switch-gg'>Current support is based on the number of students in the whole dataset (4260). It is not based on the number of students for whom the current selection applies ({basisForSupport}).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Current Selection'</button>
+                </> : <></>}
         </div>
     );
 };
 
-export const DiffChart = ({ data, sizeOfData }) => {
+export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basisForSupportRight }) => {
     const svgRef = useRef(); // Ref for the SVG element
     const tooltipRef = useRef(); // Ref for the tooltip div
     //const lenOfData = data && typeof data.length === "number" ? data.length : 0
@@ -403,6 +452,8 @@ export const DiffChart = ({ data, sizeOfData }) => {
     });
     const svgContainerRef = useRef();
     const [sortedData, setSortedData] = useState([]);
+    const [supportBasedOnSelectedDataset, setSupportBasedOnSelectedDataset] = useState(true)
+
     useEffect(() => {
         // Initialize sortedData with the input data
         setSortedData(data);
@@ -436,7 +487,25 @@ export const DiffChart = ({ data, sizeOfData }) => {
             resizeObserver.disconnect();
             debouncedResizeHandler.cancel(); // Cancel any pending debounced calls
         };
-    }, [dimHeight]);
+    }, [dimHeight, supportBasedOnSelectedDataset]);
+
+    const handleSwitch = () => {
+        setData((prev) => {
+            let newData = prev
+            for (const child of newData) {
+                const rVal = child.rightValue
+                const lVal = child.leftValue
+                const rValWDB = child.rightValueWithDifferentBasis
+                const lValWDB = child.leftValueWithDifferentBasis
+                child.rightValue = rValWDB
+                child.leftValue = lValWDB
+                child.rightValueWithDifferentBasis = rVal
+                child.leftValueWithDifferentBasis = lVal
+            }
+            return newData
+        })
+        setSupportBasedOnSelectedDataset((prev) => !prev)
+    }
 
     const drawChart = () => {
         const { width, height, margin } = dimensions;
@@ -643,6 +712,13 @@ export const DiffChart = ({ data, sizeOfData }) => {
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
                 }}
             ></div>
+            {supportBasedOnSelectedDataset ?
+                <><div className='switch-gg'>Current support is based on the number of students for whom the current selection applies (Left: {basisForSupportLeft}, Right: {basisForSupportRight}). It is not based on the number of students in the whole dataset (4260).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Dataset'</button></> :
+                <>
+                    <div className='switch-gg'>Current support is based on the number of students in the whole dataset (4260). It is not based on the number of students for whom the current selection applies (Left: {basisForSupportLeft}, Right: {basisForSupportRight}).</div>
+                    <button onClick={handleSwitch}>Switch to base 'Current Selection'</button>
+                </>}
         </div>
     );
 }

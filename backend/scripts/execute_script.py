@@ -215,6 +215,7 @@ def execute_script_func(
         relative_support_divisor = create_spmf_ass_rules_input(
             work, tmp, grade_bool, all_distinct_courses, USE_S_OR_Y_AS_BASIS_FOR_FI_AR
         )
+        print("rel sup div", relative_support_divisor)
         run_spmf_association_rules(
             algo_name, tmp, tmp2, global_min_sup, global_min_conf
         )
