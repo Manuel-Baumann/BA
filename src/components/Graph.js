@@ -45,7 +45,6 @@ export const IcicleWithHover = ({ data, setData, basisForSupport }) => {
             switchSupportBaseRecursively(newData)
             return newData
         })
-        console.log(data)
         setSupportBasedOnSelectedDataset((prev) => !prev)
     }
     const switchSupportBaseRecursively = (child) => {
@@ -215,7 +214,7 @@ const getHTML = (nodeName, size, remainingSize, depth, confidence) => {
     let html = `<strong>Name:</strong> ${nodeName}<br/>`
     if (size && size > 0) html = html + `<strong>Support:</strong> ${parseFloat(size).toFixed(4)}<br/>`
     if (remainingSize && remainingSize > 0) html = html + `<strong>Remaining support:</strong> ${remainingSize.toFixed(4)}<br/>`
-    if (confidence) html = html + `<strong>Confidence:</strong> ${confidence.toFixed(4)}<br/>`
+    if (confidence && confidence !== undefined) html = html + `<strong>Confidence:</strong> ${parseFloat(confidence).toFixed(4)}<br/>`
     return depth ? html + `<strong>Depth:</strong> ${depth}` : html
 }
 
@@ -276,6 +275,10 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
                 const valWDB = child.valueWithDifferentBase
                 child.value = valWDB
                 child.valueWithDifferentBase = val
+                const conf = child.confidence
+                const confWDB = child.confidenceWithDifferentBase
+                child.confidence = confWDB
+                child.confidenceWithDifferentBase = conf
             }
             return newData
         })
@@ -358,7 +361,7 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
                 d3.select(event.currentTarget).style("fill", "#ffa726"); // Highlight bar
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(getHTML(d.label, d.value, null, null, null))
+                    .html(getHTML(d.label, d.value, null, null, d.confidence))
                 // Update the tooltip position when mouse moves
                 d3.select(event.currentTarget).on("mousemove", (event) => {
                     const [mouseX, mouseY] = d3.pointer(event); // Get mouse position
@@ -396,6 +399,8 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
             });
         } else if (type === "support") {
             newData = [...sortedData].sort((a, b) => b.value - a.value);
+        } else if (type === "confidence") {
+            newData = [...sortedData].sort((a, b) => b.confidence - a.confidence);
         }
         setSortedData(newData); // Update sortedData
     };
@@ -404,6 +409,7 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
         <div style={{ position: "relative" }}>
             <div style={{ marginBottom: "10px" }}>
                 <button className="sort-button" onClick={() => sortData("support")}>Sort by Support</button>
+                {data[0] && data[0].confidence ? <button className="sort-button" onClick={() => sortData("confidence")}>Sort by Confidence</button> : <></>}
                 <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
                 <button className="sort-button" onClick={() => sortData("length")}>Sort by Itemset-Size</button>
             </div>
@@ -501,6 +507,15 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
                 child.leftValue = lValWDB
                 child.rightValueWithDifferentBasis = rVal
                 child.leftValueWithDifferentBasis = lVal
+
+                const rconf = child.rightConfidence
+                const rconfWDB = child.rightConfidenceWithDifferentBase
+                child.rightConfidence = rconfWDB
+                child.rightConfidenceWithDifferentBase = rconf
+                const lconf = child.leftConfidence
+                const lconfWDB = child.leftConfidenceWithDifferentBase
+                child.leftConfidence = lconfWDB
+                child.leftConfidenceWithDifferentBase = lconf
             }
             return newData
         })
@@ -605,10 +620,12 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
         // Add event listeners for interactivity
         barGroups.select(".bar-left")
             .on("mouseover", (event, d) => {
+                let html = `<strong>Left Support:</strong> ${parseFloat(d.leftValue).toFixed(4)}<br/>`
+                if (d.leftConfidence) html = html + `<strong>Left Confidence:</strong> ${parseFloat(d.leftConfidence).toFixed(4)}`
                 d3.select(event.currentTarget).style("fill", "#ffa726");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Left Value: ${parseFloat(d.leftValue).toFixed(4)}`);
+                    .html(html);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);
@@ -623,10 +640,12 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
 
         barGroups.select(".bar-right")
             .on("mouseover", (event, d) => {
+                let html = `<strong>Right Support:</strong> ${parseFloat(d.rightValue).toFixed(4)}<br/>`
+                if (d.rightConfidence) html = html + `<strong>Right Confidence:</strong> ${parseFloat(d.rightConfidence).toFixed(4)}`
                 d3.select(event.currentTarget).style("fill", "#4caf50");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Right Value: ${parseFloat(d.rightValue).toFixed(4)}`);
+                    .html(html);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);
@@ -676,6 +695,10 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
             newData = [...sortedData].sort((a, b) => b.leftValue - a.leftValue);
         } else if (type === "rightsupport") {
             newData = [...sortedData].sort((a, b) => b.rightValue - a.rightValue);
+        } else if (type === "lconfidence") {
+            newData = [...sortedData].sort((a, b) => b.leftConfidence - a.leftConfidence);
+        } else if (type === "rconfidence") {
+            newData = [...sortedData].sort((a, b) => b.rightConfidence - a.rightConfidence);
         }
         setSortedData(newData); // Update sortedData
     };
@@ -688,6 +711,8 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
                 <button className="sort-button" onClick={() => sortData("size")}>Sort by Itemset-Size</button>
                 <button className="sort-button" onClick={() => sortData("leftsupport")}>Sort by Left Support</button>
                 <button className="sort-button" onClick={() => sortData("rightsupport")}>Sort by Right Support</button>
+                {data[0] && data[0].rightConfidence ? <><button className="sort-button" onClick={() => sortData("lconfidence")}>Sort by Left Confidence</button>
+                    <button className="sort-button" onClick={() => sortData("rconfidence")}>Sort by Right Confidence</button></> : <></>}
             </div>
             <div ref={svgContainerRef} style={{ width: "100%", height: "100%" }}>
                 <svg ref={svgRef}>
@@ -712,13 +737,13 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
                     backgroundColor: 'rgba(0, 0, 0, 0.7)',
                 }}
             ></div>
-            {supportBasedOnSelectedDataset ?
+            {basisForSupportLeft != 4260 || basisForSupportRight != 4260 ? supportBasedOnSelectedDataset ?
                 <><div className='switch-gg'>Current support is based on the number of students for whom the current selection applies (Left: {basisForSupportLeft}, Right: {basisForSupportRight}). It is not based on the number of students in the whole dataset (4260).</div>
                     <button onClick={handleSwitch}>Switch to base 'Dataset'</button></> :
                 <>
                     <div className='switch-gg'>Current support is based on the number of students in the whole dataset (4260). It is not based on the number of students for whom the current selection applies (Left: {basisForSupportLeft}, Right: {basisForSupportRight}).</div>
                     <button onClick={handleSwitch}>Switch to base 'Current Selection'</button>
-                </>}
+                </> : <></>}
         </div>
     );
 }

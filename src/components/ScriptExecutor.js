@@ -126,12 +126,12 @@ const ScriptExecutor = () => {
         column2: radioGroupColumnData.map(group => group.options[0])   // Set the first option for each group
     });
     const [minSups, setMinSups] = useState({
-        column1: 80,
-        column2: 80
+        column1: 100,
+        column2: 100
     })
     const [minConfs, setMinConfs] = useState({
-        column1: 80,
-        column2: 80
+        column1: 100,
+        column2: 100
     })
     const [selectedCheckboxColumnValues, setSelectedCheckboxColumnValues] = useState({
         column1: checkBoxGroupColumnData.reduce((acc, option) => {
@@ -169,6 +169,10 @@ const ScriptExecutor = () => {
         const range = rangeValues[`column${columnIndex}`];
         let response = ''
         const binsBooleanForAlgorithm = values.at(1) === "Grades" ? binsBool : false
+        const minS1 = minSups.column1[0] ? minSups.column1[0] : minSups.column1
+        const minC1 = minConfs.column1[0] ? minConfs.column1[0] : minConfs.column1
+        const minS2 = minSups.column2[0] ? minSups.column2[0] : minSups.column2
+        const minC2 = minConfs.column2[0] ? minConfs.column2[0] : minConfs.column2
         try {
             // Execute the python script
             response = await axios.post('http://localhost:5000/execute', {
@@ -179,9 +183,9 @@ const ScriptExecutor = () => {
                 sliderMax: range[1],
                 numberOfOutputLines,
                 algoParams: {
-                    toBeUsed: true, // boolean to use custom parameters for algorithms
-                    minSup: minSups[`column${columnIndex}`] !== 0 ? minSups[`column${columnIndex}`][0] : 0,
-                    minConf: minConfs[`column${columnIndex}`] !== 0 ? minConfs[`column${columnIndex}`][0] : 0
+                    toBeUsed: true,// boolean to use custom parameters for algorithms
+                    minSup: columnIndex === 1 ? minS1 : minS2,
+                    minConf: columnIndex === 1 ? minC1 : minC2
                 },
                 checkBoxData: Object.keys(checkboxColumnData).filter(k => checkboxColumnData[k]),
                 studentsBasisBoolean: studentsBasis,
@@ -317,17 +321,11 @@ const ScriptExecutor = () => {
             // Execute 
             const outputLines1 = output1.split('\n');
             const outputLines2 = output2.split('\n');
-            // const len1 = outputLines1.length
-            // const len2 = outputLines2.length
-            let split1 = []
-            let split2 = []
-            let setOfStrings1 = []
-            let setOfStrings2 = []
 
-            split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-            split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-            setOfStrings1 = new Set(split1.map(([str]) => str))
-            setOfStrings2 = new Set(split2.map(([str]) => str))
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            const setOfStrings1 = new Set(split1.map(([str]) => str))
+            const setOfStrings2 = new Set(split2.map(([str]) => str))
             const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
             const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
             const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
@@ -355,27 +353,94 @@ const ScriptExecutor = () => {
             setDiffOutputRight(o3.join('\n'));
             setShowDiffBool(true)
         }
+        else if (lastExecuted1 == 2) {
+            const outputLines1 = output1.split('\n')
+            const outputLines2 = output2.split('\n')
+
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].trim()])
+            const setOfStrings1 = new Set(split1.map(([str]) => str))
+            const setOfStrings2 = new Set(split2.map(([str]) => str))
+            const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
+            const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
+            const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
+            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({ label: item, leftValue: split1.find(([str]) => str === item)?.[1], rightValue: split2.find(([str]) => str === item)?.[1], leftValueWithDifferentBasis: parseFloat(split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL), rightValueWithDifferentBasis: parseFloat(split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL) }))
+            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({ label: item, value: split1.find(([str]) => str === item)?.[1], valueWithDifferentBase: split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL }))
+            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({ label: item, value: split2.find(([str]) => str === item)?.[1], valueWithDifferentBase: split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL }))
+
+            const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
+            const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
+
+            const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
+            const o2 = arrayOfNonUniqueObjects.map((item) => `${item.label}       Support: left->${item.leftValue}  right->${item.rightValue}`)
+            const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
+
+            sizeOfDiffData = o2.length
+            sizeOfDiffLeftData = o1.length
+            sizeOfDiffRightData = o2.length
+            setDiffData(arrayOfNonUniqueObjects)
+            setDiffLeftData(arrayOfUniqueObjectsLeft)
+            setDiffRightData(arrayOfUniqueObjectsRight)
+            setDiffOutputLeft(o1.join('\n'));
+            setDiffOutputMiddle(o2.join('\n'));
+            setDiffOutputRight(o3.join('\n'));
+            setShowDiffBool(true)
+        }
+        // Association Rules
         else {
-            console.log("Diff beween Association Rules and Sequence Patterns")
-            /*
-            for (let i = 0; i < len1; i++) {
-                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                    split1 = split1.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                    setOfStrings1 = setOfStrings1.map(l => l.split(' || ').sort().trim().join(' & '))
-                }
-            }
-            for (let i = 0; i < len2; i++) {
-                if (selectedValues.at(-1) == 'Frequent Itemsets' || selectedValues.at(-1) == 'Association Rules') {
-                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                } else if (selectedValues.at(-1) == 'Sequence Patterns') {
-                    split2 = split2.map(([l, ind]) => [l.split(' || ').sort().trim().join(' & '), ind])
-                    setOfStrings2 = setOfStrings2.map(l => l.split(' || ').sort().trim().join(' & '))
-                }
-            }*/
+            const outputLines1 = output1.split('\n')
+            const outputLines2 = output2.split('\n')
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
+
+            const setOfStrings1 = new Set(split1.map(([str]) => str))
+            const setOfStrings2 = new Set(split2.map(([str]) => str))
+            const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
+            const setUnique1 = new Set([...setOfStrings1].filter(item => !setOfStrings2.has(item)))
+            const setUnique2 = new Set([...setOfStrings2].filter(item => !setOfStrings1.has(item)))
+            const arrayOfNonUniqueObjects = [...setOfNonUniqueStrings].map(item => ({
+                label: item,
+                leftValue: split1.find(([str]) => str === item)?.[1],
+                rightValue: split2.find(([str]) => str === item)?.[1],
+                leftValueWithDifferentBasis: parseFloat(split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL),
+                rightValueWithDifferentBasis: parseFloat(split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL),
+                leftConfidence: split1.find(([str]) => str === item)?.[2],
+                rightConfidence: split2.find(([str]) => str === item)?.[2],
+                leftConfidenceWithDifferentBase: parseFloat(split1.find(([str]) => str === item)?.[2] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL),
+                rightConfidenceWithDifferentBase: parseFloat(split2.find(([str]) => str === item)?.[2] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL)
+            }))
+            const arrayOfUniqueObjectsLeft = [...setUnique1].map(item => ({
+                label: item,
+                value: split1.find(([str]) => str === item)?.[1],
+                valueWithDifferentBase: split1.find(([str]) => str === item)?.[1] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL,
+                confidence: split1.find(([str]) => str === item)?.[2],
+                confidenceWithDifferentBase: split1.find(([str]) => str === item)?.[2] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL
+            }))
+            const arrayOfUniqueObjectsRight = [...setUnique2].map(item => ({
+                label: item,
+                value: split2.find(([str]) => str === item)?.[1],
+                valueWithDifferentBase: split2.find(([str]) => str === item)?.[1] * basisForSupportRight / amountOfUniqueStudentsInDatasetGLOBAL,
+                confidence: split2.find(([str]) => str === item)?.[2],
+                confidenceWithDifferentBase: split2.find(([str]) => str === item)?.[2] * basisForSupportLeft / amountOfUniqueStudentsInDatasetGLOBAL
+            }))
+
+            const uniqueToColumn1 = split1.filter(([str]) => !setOfStrings2.has(str));
+            const uniqueToColumn2 = split2.filter(([str]) => !setOfStrings1.has(str));
+
+            const o1 = uniqueToColumn1.map(([str, sup]) => `${str}       Support: ${sup}`)
+            const o2 = arrayOfNonUniqueObjects.map((item) => `${item.label}       Support: left->${item.leftValue}  right->${item.rightValue}`)
+            const o3 = uniqueToColumn2.map(([str, sup]) => `${str}       Support: ${sup}`)
+
+            sizeOfDiffData = o2.length
+            sizeOfDiffLeftData = o1.length
+            sizeOfDiffRightData = o2.length
+            setDiffData(arrayOfNonUniqueObjects)
+            setDiffLeftData(arrayOfUniqueObjectsLeft)
+            setDiffRightData(arrayOfUniqueObjectsRight)
+            setDiffOutputLeft(o1.join('\n'));
+            setDiffOutputMiddle(o2.join('\n'));
+            setDiffOutputRight(o3.join('\n'));
+            setShowDiffBool(true)
         }
     };
 
@@ -391,7 +456,6 @@ const ScriptExecutor = () => {
         newRangeValues[`column${columnIndex}`] = values;
         setRangeValues(newRangeValues);
     };
-
     // Handle the range slider change for both columns
     const handleMinSupChange = (value, columnIndex) => {
         const newMinSupValues = { ...minSups };
@@ -796,7 +860,7 @@ const ScriptExecutor = () => {
                         <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle ? <div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} setData={setDiffData} basisForSupportLeft={basisForSupportLeft} basisForSupportRight={basisForSupportRight} /></div> : <></>}</pre>
                         <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} setData={setDiffRightData} basisForSupport={basisForSupportRight} /></div> : <></>}</pre>
                     </div></>
-            ) : lastExecuted1 === lastExecuted2 && lastExecuted1 === 0 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
+            ) : lastExecuted1 === lastExecuted2 && lastExecuted1 != -1 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }
         </div>
     );
