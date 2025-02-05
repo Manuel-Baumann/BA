@@ -143,7 +143,7 @@ def execute_script_func(
 
     # renaming()
 
-    if fe_min_sup < 0.04:
+    if global_min_sup < 0.04:
         print("Min sup too low! The algorithm would run for a long time.")
         print("WARNING:Min sup too low!")
         return
@@ -215,7 +215,7 @@ def execute_script_func(
 
     ################################## Association Rules ##################################
     if fe_sets_rules_patterns == 1:
-        if fe_min_sup < 0.5:
+        if global_min_sup < 0.5:
             print("Min sup too low! The algorithm would run for a long time.")
             print("WARNING:Min sup too low!")
             return
