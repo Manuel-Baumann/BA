@@ -161,6 +161,8 @@ const ScriptExecutor = () => {
     const [basisForSupport, setBasisForSupport] = useState(-1)
     const [basisForSupportLeft, setBasisForSupportLeft] = useState(-1)
     const [basisForSupportRight, setBasisForSupportRight] = useState(-1)
+    const [isLoadingLeft, setIsLoadingLeft] = useState(false)
+    const [isLoadingRight, setIsLoadingRight] = useState(false)
 
     const executeScript = async (columnIndex) => {
         const values = selectedValues
@@ -175,6 +177,7 @@ const ScriptExecutor = () => {
         const minC2 = minConfs.column2[0] ? minConfs.column2[0] : minConfs.column2
         try {
             // Execute the python script
+            columnIndex === 1 ? setIsLoadingLeft(true) : setIsLoadingRight(true)
             response = await axios.post('http://localhost:5000/execute', {
                 column: columnIndex,
                 values: values,
@@ -312,8 +315,8 @@ const ScriptExecutor = () => {
                 setData2(buildIcicleHierarchySeqPats([]))
                 setPostProcOutput2('');
             }
-
         }
+        columnIndex === 1 ? setIsLoadingLeft(false) : setIsLoadingRight(false)
     };
 
     const compareOutputs = () => {
@@ -725,7 +728,7 @@ const ScriptExecutor = () => {
                                 />
                             </div> : null}</div>
                     </div>
-                    <button className="execute-button" onClick={() => executeScript(1)}>
+                    <button className="execute-button" onClick={() => executeScript(1)} disabled={isLoadingLeft}>
                         Execute Algorithm
                     </button>
                     <div>
@@ -827,7 +830,7 @@ const ScriptExecutor = () => {
                                 />
                             </div> : null}</div>
                     </div>
-                    <button className="execute-button" onClick={() => executeScript(2)}>
+                    <button className="execute-button" onClick={() => executeScript(2)} disabled={isLoadingRight}>
                         Execute Algorithm
                     </button>
                     <div>
