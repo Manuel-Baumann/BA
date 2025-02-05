@@ -226,7 +226,20 @@ const ScriptExecutor = () => {
                     leaveIn = i;
                 }
                 if (responseLines[i].startsWith('WARNING')) {
-                    throw new Error("Empty dataset!")
+                    if (columnIndex === 1) {
+                        setPreOutput1(responseLines[i])
+                        setOutput1(responseLines[i]);
+                        sizeOfData1 = 0
+                        setData1(buildIcicleHierarchySeqPats([]))
+                        setPostProcOutput1('');
+                    } else {
+                        setPreOutput2(responseLines[i])
+                        setOutput2(responseLines[i]);
+                        sizeOfData2 = 0
+                        setData2(buildIcicleHierarchySeqPats([]))
+                        setPostProcOutput2('');
+                    }
+                    throw new Error(responseLines[i])
                 }
                 i++;
             }
@@ -700,7 +713,7 @@ const ScriptExecutor = () => {
                         <label>Min: {rangeValues.column1[0]} | Max: {rangeValues.column1[1]}</label>
                         <Slider
                             range
-                            min={0}
+                            min={1}
                             max={100}
                             value={rangeValues.column1}
                             onChange={(values) => handleRangeChange(values, 1)}
@@ -715,7 +728,7 @@ const ScriptExecutor = () => {
                             <label>Minimum support: {minSups.column1}%</label>
                             <Slider
                                 range
-                                min={0}
+                                min={1}
                                 max={100}
                                 value={minSups.column1}
                                 onChange={(value) => handleMinSupChange(value, 1)}
@@ -727,7 +740,7 @@ const ScriptExecutor = () => {
                                 <label>Minimum confidence: {minConfs.column1}%</label>
                                 <Slider
                                     range
-                                    min={0}
+                                    min={1}
                                     max={100}
                                     value={minConfs.column1}
                                     onChange={(value) => handleMinConfChange(value, 1)}
@@ -805,7 +818,7 @@ const ScriptExecutor = () => {
                         <label>Min: {rangeValues.column2[0]} | Max: {rangeValues.column2[1]}</label>
                         <Slider
                             range
-                            min={0}
+                            min={1}
                             max={100}
                             value={rangeValues.column2}
                             onChange={(values) => handleRangeChange(values, 2)}
@@ -820,7 +833,7 @@ const ScriptExecutor = () => {
                             <label>Minimum support: {minSups.column2}%</label>
                             <Slider
                                 range
-                                min={0}
+                                min={1}
                                 max={100}
                                 value={minSups.column2}
                                 onChange={(value) => handleMinSupChange(value, 2)}
