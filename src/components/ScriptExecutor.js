@@ -325,8 +325,8 @@ const ScriptExecutor = () => {
             const outputLines1 = output1.split('\n');
             const outputLines2 = output2.split('\n');
 
-            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
-            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' || '), l.split('#SUP:')[1].trim()])
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' && '), l.split('#SUP:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' || ').sort().join(' && '), l.split('#SUP:')[1].trim()])
             const setOfStrings1 = new Set(split1.map(([str]) => str))
             const setOfStrings2 = new Set(split2.map(([str]) => str))
             const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
@@ -360,8 +360,8 @@ const ScriptExecutor = () => {
             const outputLines1 = output1.split('\n')
             const outputLines2 = output2.split('\n')
 
-            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].trim()])
-            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].trim()])
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' && ')).join(' => '), l.split('#SUP:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' && ')).join(' => '), l.split('#SUP:')[1].trim()])
             const setOfStrings1 = new Set(split1.map(([str]) => str))
             const setOfStrings2 = new Set(split2.map(([str]) => str))
             const setOfNonUniqueStrings = new Set([...setOfStrings1].filter(item => setOfStrings2.has(item)))
@@ -393,8 +393,8 @@ const ScriptExecutor = () => {
         else {
             const outputLines1 = output1.split('\n')
             const outputLines2 = output2.split('\n')
-            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
-            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' || ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
+            const split1 = outputLines1.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' && ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
+            const split2 = outputLines2.map((l, i) => [l.split('#SUP:')[0].trim().split(' => ').map(side => side.split(' || ').sort().join(' && ')).join(' => '), l.split('#SUP:')[1].split('#CONF:')[0].trim(), l.split('#CONF:')[1].trim()])
 
             const setOfStrings1 = new Set(split1.map(([str]) => str))
             const setOfStrings2 = new Set(split2.map(([str]) => str))
@@ -593,6 +593,9 @@ const ScriptExecutor = () => {
                                         onChange={handleBinsBoolChange}
                                     />
                                     Put values into bins
+                                    <span className="info-icon">ℹ️
+                                        <span className="tooltip-text">By choosing bins, you tell the algorithm to treat values as if they were different ones. For example, the default bins put '1.0', '1.3', '1.7' into the bin named '1', meaning they are treated as if they were the value '1'. You can rename the bins. </span>
+                                    </span>
                                 </label>
                                 {binsBool ? <>
 
@@ -671,8 +674,10 @@ const ScriptExecutor = () => {
                         </div>
                     ))}
                     <div className="checkbox-container">
-                        <h3>Include the following students:</h3>
-                        {checkBoxGroupColumnData.map((item) => (
+                        <h3>Include the following students:<span className="info-icon">ℹ️
+                            <span className="tooltip-text"><h4>If you exclude a group of students, they won't be considered by the algorithm. Don't exclude two groups that won't leave any students for the algorithm to run on.</h4></span>
+                        </span></h3>
+                        {checkBoxGroupColumnData.map((item, ind) => (
                             <div key={item}>
                                 <label>
                                     <input
@@ -683,11 +688,12 @@ const ScriptExecutor = () => {
                                     />
                                     {item}
                                 </label>
+                                {ind % 2 == 1 ? <hr className='checkbox' /> : null}
                             </div>
                         ))}
-                    </div>
+                    </div >
                     {/* Slider for Column 1 */}
-                    <div className="slider-container">
+                    < div className="slider-container" >
                         <span className="info-icon">ℹ️
                             <span className="tooltip-text">{infoMinMax}</span>
                         </span>
@@ -773,8 +779,10 @@ const ScriptExecutor = () => {
                         </div>
                     ))}
                     <div className="checkbox-container">
-                        <h3>Include the following students:</h3>
-                        {checkBoxGroupColumnData.map((item) => (
+                        <h3>Include the following students:<span className="info-icon">ℹ️
+                            <span className="tooltip-text"><h4>If you exclude a group of students, they won't be considered by the algorithm. Don't exclude two groups that won't leave any students for the algorithm to run on.</h4></span>
+                        </span></h3>
+                        {checkBoxGroupColumnData.map((item, ind) => (
                             <div key={item}>
                                 <label>
                                     <input
@@ -785,6 +793,7 @@ const ScriptExecutor = () => {
                                     />
                                     {item}
                                 </label>
+                                {ind % 2 == 1 ? <hr className='checkbox' /> : null}
                             </div>
                         ))}
                     </div>

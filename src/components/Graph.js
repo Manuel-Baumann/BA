@@ -160,6 +160,9 @@ export const IcicleWithHover = ({ data, setData, basisForSupport }) => {
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <span className="info-icon">ℹ️
+                <span className="tooltip-text"> Choose the minimum confidence for the association rules </span>
+            </span>
             {/* Breadcrumbs */}
             <div
                 style={{
@@ -407,6 +410,9 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
 
     return (
         <div style={{ position: "relative" }}>
+            <span className="info-icon">ℹ️
+                <span className="tooltip-text"> This graph shows itemsets and their support. You can hover over the itemsets and get information about them. </span>
+            </span>
             <div style={{ marginBottom: "10px" }}>
                 <button className="sort-button" onClick={() => sortData("support")}>Sort by Support</button>
                 {data[0] && data[0].confidence ? <button className="sort-button" onClick={() => sortData("confidence")}>Sort by Confidence</button> : <></>}
@@ -705,6 +711,9 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
 
     return (
         <div style={{ position: "relative" }}>
+            <span className="info-icon">ℹ️
+                <span className="tooltip-text"> This graph shows itemsets, rules or patterns that exist in both the output on the left cohort AND the right cohort. Blue bars show the difference in support between the cohorts. Hover over the bars to find out information on the itemsets.</span>
+            </span>
             <div style={{ marginBottom: "10px" }}>
                 <button className="sort-button" onClick={() => sortData("support")}>Sort by Difference in Support</button>
                 <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
