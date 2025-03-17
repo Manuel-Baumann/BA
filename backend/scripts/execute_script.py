@@ -215,10 +215,10 @@ def execute_script_func(
 
     ################################## Association Rules ##################################
     if fe_sets_rules_patterns == 1:
-        if global_min_sup < 0.5:
-            print("Min sup too low! The algorithm would run for a long time.")
-            print("WARNING:Min sup too low!")
-            return
+        # if global_min_sup < 0.5:
+        #    print("Min sup too low! The algorithm would run for a long time.")
+        #    print("WARNING:Min sup too low!")
+        #    return
 
         print('"""POSTPROCESSING""" Ass Rules algo:', algo_name)
 

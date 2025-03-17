@@ -96,24 +96,22 @@ def run_spmf_association_rules(algo_name, input, output, minsup, minconf):
 
 def sort_spmf_ass_rules(output):
     lines = []
-    supports = []
 
     with open(output, "r", newline="", encoding="utf-8") as f:
-        for index, line in enumerate(f):
+        for line in f:
             parts = line.strip().split()
             if "#SUP:" in parts and "#CONF:" in parts:
                 try:
                     # Extract support value
                     sup_index = parts.index("#SUP:") + 1
                     support_value = float(parts[sup_index])  # Convert to float
-                    supports.append((support_value, index))
-                    lines.append(line)
+                    lines.append((support_value, line))  # Store (support, line)
                 except (ValueError, IndexError):
                     continue  # Skip malformed lines
 
-    # Sort descending by support value
-    supports.sort(key=lambda x: x[0], reverse=True)
+    # Sort by support value (descending)
+    lines.sort(key=lambda x: x[0], reverse=True)
 
     with open(output, "w", newline="", encoding="utf-8") as g:
-        for _, index in supports:
-            g.write(lines[index])  # Write the correctly sorted lines
+        for _, sorted_line in lines:
+            g.write(sorted_line)  # Write the correctly sorted lines

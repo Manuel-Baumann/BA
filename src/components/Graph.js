@@ -669,7 +669,7 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
                 d3.select(event.currentTarget).style("fill", "#FCE205");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Difference between values: ${Math.abs(d.rightValue - d.leftValue)}`);
+                    .html(`Difference between values: ${parseFloat(Math.abs(d.rightValue - d.leftValue)).toFixed(4)}`);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);
