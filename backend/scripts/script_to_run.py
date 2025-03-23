@@ -33,6 +33,8 @@ try:
     bins_bool = os.getenv("BINS_BOOL")
     bins_array = os.getenv("BINS_ARRAY")
     only_mandatory_boolean = os.getenv("ONLY_MANDATORY_BOOLEAN")
+    semester_min = os.getenv("SEMESTER_MIN", "")
+    semester_max = os.getenv("SEMESTER_MAX", "")
 
     # Example usage of the values
 
@@ -90,6 +92,8 @@ try:
         bins_bool,
         bins_array,
         only_mandatory_boolean,
+        semester_min,
+        semester_max,
     )
 
 except Exception as e:

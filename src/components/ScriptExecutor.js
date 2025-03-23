@@ -13,7 +13,7 @@ import GradeLine from './GradeLine';
 // values: [options1, options2, ...]
 const radioGroupData = [
     {
-        groupName: "Select the category of students",
+        groupName: "Set of students",
         options: ['All students', 'Only students who graduated at RWTH'],
         info: "Only students who graduated at RWTH: Filtering for students who have passed all mandatory courses at RWTH, including the bachelor`s thesis."
     },
@@ -23,24 +23,24 @@ const radioGroupData = [
         info: "Prefiltered (no 0 credits and passed): For some courses the students got 0 credits and passed, those are left out."
     },*/
     {
-        groupName: "Select the type of academic data",
+        groupName: "Type of academic data",
         options: ['Courses', 'Grades'],
         info: "Choose wether to run the algorithm on the courses names or the grades that the students got. Putting values into bins means for " +
             "grades, 1.0, 1.3, 1.7 -> 1 ... - and for courses putting math subjects into the Math-Bin and so on."
     },
     {
-        groupName: "Select the time period",
+        groupName: "Time period",
         options: ['Year', 'Semester'],
         info: "Choose wether to run the algorithm on a semester`s basis or a year`s basis.",
     },
     {
-        groupName: "Select the set of courses",
+        groupName: "Set of courses",
         options: ['All courses', 'Only not passed courses'],
         info: "Choose whether to include all courses or only failed courses."
     },
     { groupName: "Insights", options: ['Normal', 'Closed', 'Maximal'], info: "Choose which kind of ouput you want" },
     {
-        groupName: "Select the analysis method",
+        groupName: "Analysis method",
         options: ['Frequent Itemsets', 'Association Rules', 'Sequence Patterns'],
         info: "Choose one of the three different types of information to be shown. Having Students as basis means not treating each" +
             " semester/year individually, but only each student.",
@@ -75,6 +75,7 @@ const radioGroupColumnData = [
     },
 ]
 const infoMinMax = "Students will be sorted by their mean grade. Only those within the range (in %) will be considered."
+const infoSemesters = "Only courses taken within the specified range will be considered."
 const checkBoxGroupColumnData = [
     "BA passed",
     "BA not passed",
@@ -112,10 +113,14 @@ const ScriptExecutor = () => {
     const [data2, setData2] = useState({});
     const [lastExecuted1, setLastExecuted1] = useState(-1)
     const [lastExecuted2, setLastExecuted2] = useState(-1)
-    const [numberOfOutputLines, setNumberOfOutputLines] = useState(12);
+    const [numberOfOutputLines, setNumberOfOutputLines] = useState(200);
     const [rangeValues, setRangeValues] = useState({
         column1: [0, 100],  // Initial min and max values for Column 1
         column2: [0, 100]   // Initial min and max values for Column 2
+    });
+    const [semesters, setSemesters] = useState({
+        column1: [60, 105],  // Initial min and max values for Column 1
+        column2: [60, 105]   // Initial min and max values for Column 2
     });
     // Updated options for six dropdowns
     const [selectedValues, setSelectedValues] = useState(
@@ -169,6 +174,7 @@ const ScriptExecutor = () => {
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
         const checkboxColumnData = columnIndex === 1 ? selectedCheckboxColumnValues.column1 : selectedCheckboxColumnValues.column2;
         const range = rangeValues[`column${columnIndex}`];
+        const semesterRange = semesters[`column${columnIndex}`];
         let response = ''
         const binsBooleanForAlgorithm = values.at(1) === "Grades" ? binsBool : false
         const minS1 = minSups.column1[0] ? minSups.column1[0] : minSups.column1
@@ -194,7 +200,9 @@ const ScriptExecutor = () => {
                 studentsBasisBoolean: studentsBasis,
                 binsBoolean: binsBooleanForAlgorithm,
                 binsArray: binsArr,
-                onlyMandatoryBoolean: onlyMandatoryBool
+                onlyMandatoryBoolean: onlyMandatoryBool,
+                semesterMin: semesterRange[0],
+                semesterMax: semesterRange[1]
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -249,7 +257,7 @@ const ScriptExecutor = () => {
             }
 
             // Get basis number of students/semesters (transactions) of algorithm
-            const basisForSupportFromOutput = responseLines.filter(line => line.startsWith('Unique students in dataset'))[0].split(':')[1].trim()
+            const basisForSupportFromOutput = responseLines.filter(line => line.startsWith('Unique students in used dataset'))[0].split(':')[1].trim()
             setBasisForSupport(basisForSupportFromOutput)
             if (columnIndex === 1) {
                 setBasisForSupportLeft(basisForSupportFromOutput)
@@ -555,6 +563,16 @@ const ScriptExecutor = () => {
     const handleOnlyMandatoryBoolChange = () => {
         setOnlyMandatoryBool((prev) => !prev)
     }
+    const semesterToTerm = (semester) => {
+        const year = 2000 + Math.floor((semester - 60) / 2);
+        const term = semester % 2 === 0 ? 'S' : 'W';
+        return year + term;
+    };
+    const handleSemesterChange = (values, columnIndex) => {
+        const newRangeValues = { ...semesters };
+        newRangeValues[`column${columnIndex}`] = values;
+        setSemesters(newRangeValues);
+    };
 
     return (
         <div className="container">
@@ -564,9 +582,9 @@ const ScriptExecutor = () => {
             <div className="radio-group-container">
                 {radioGroupData.map((group, groupIndex) => (
                     <div key={groupIndex} className="radio-group">
-                        <span className="info-icon">ℹ️
+                        <h3>{group.groupName}<span className="info-icon"> ℹ️
                             <span className="tooltip-text">{group.info}</span>
-                        </span><h3>{group.groupName}</h3>
+                        </span></h3>
                         {group.options.map((option, optionIndex) => (
                             <label key={optionIndex}>
                                 <input
@@ -579,7 +597,7 @@ const ScriptExecutor = () => {
                                 {option}
                             </label>
                         ))}
-                        {selectedValues.at(-1) !== 'Sequence Patterns' && group.groupName === 'Select the analysis method' ? <div className="checkbox-container">
+                        {selectedValues.at(-1) !== 'Sequence Patterns' && group.groupName === 'Analysis method' ? <div className="checkbox-container">
                             <div key="Set Students as Basis">
                                 <label>
                                     <input
@@ -592,11 +610,11 @@ const ScriptExecutor = () => {
                                 </label>
                             </div>
                         </div> : null}
-                        {group.groupName === 'Select the type of academic data' ? <div key="OnlyMandatoryBool">
+                        {group.groupName === 'Type of academic data' ? <div key="OnlyMandatoryBool">
                             <label><input type="checkbox" name="Categorise: Mandatory / Optional" checked={onlyMandatoryBool} onChange={handleOnlyMandatoryBoolChange} />Categorise: Mandatory / Optional</label>
                         </div>
                             : null}
-                        {selectedValues.at(1) === "Grades" && group.groupName === 'Select the type of academic data' ? <div className="checkbox-container">
+                        {selectedValues.at(1) === "Grades" && group.groupName === 'Type of academic data' ? <div className="checkbox-container">
                             <div key="Put values into bins">
                                 <label>
                                     <input
@@ -648,10 +666,9 @@ const ScriptExecutor = () => {
                 ))}
                 {/* Slider for Number of ouput lines */}
                 <div className="slider-container">
-                    <span className="info-icon">ℹ️
+                    <label>Output size: {numberOfOutputLines}  <span className="info-icon">ℹ️
                         <span className="tooltip-text">Amount of lines of output to be vizualized (200 -&gt; All produced output)</span>
-                    </span>
-                    <label>Output size: {numberOfOutputLines}</label>
+                    </span></label>
                     <Slider
                         range
                         min={0}
@@ -704,16 +721,25 @@ const ScriptExecutor = () => {
                                 {ind % 2 == 1 ? <hr className='checkbox' /> : null}
                             </div>
                         ))}
-                    </div >
+                    </div>
                     {/* Slider for Column 1 */}
                     < div className="slider-container" >
-                        <span className="info-icon">ℹ️
-                            <span className="tooltip-text">{infoMinMax}</span>
-                        </span>
-                        <label>Min: {rangeValues.column1[0]} | Max: {rangeValues.column1[1]}</label>
+                        <label>Semesters:    Min: {semesterToTerm(semesters.column1[0])} | Max: {semesterToTerm(semesters.column1[1])}<span className="info-icon">ℹ️
+                            <span className="tooltip-text">{infoSemesters}</span>
+                        </span></label>
                         <Slider
                             range
-                            min={1}
+                            min={60}
+                            max={105}
+                            value={semesters.column1}
+                            onChange={(values) => handleSemesterChange(values, 1)}
+                        />
+                        <label>Students mean grades:    Min: {rangeValues.column1[0]} | Max: {rangeValues.column1[1]}<span className="info-icon">ℹ️
+                            <span className="tooltip-text">{infoMinMax}</span>
+                        </span></label>
+                        <Slider
+                            range
+                            min={0}
                             max={100}
                             value={rangeValues.column1}
                             onChange={(values) => handleRangeChange(values, 1)}
@@ -722,10 +748,9 @@ const ScriptExecutor = () => {
                     {/* Checkbox and Slider for min_sup/min_conf  */}
                     <div>
                         <div className="slider-container">
-                            <span className="info-icon">ℹ️
+                            <label>Minimum support: {minSups.column1}% <span className="info-icon">ℹ️
                                 <span className="tooltip-text"> Choose the minimum support for the frequent itemsets </span>
-                            </span>
-                            <label>Minimum support: {minSups.column1}%</label>
+                            </span> </label>
                             <Slider
                                 range
                                 min={1}
@@ -734,18 +759,19 @@ const ScriptExecutor = () => {
                                 onChange={(value) => handleMinSupChange(value, 1)}
                             />
                             {selectedValues.at(-1) === 'Association Rules' ? <div>
-                                <span className="info-icon">ℹ️
+
+                                <label> Minimum confidence: {minConfs.column1}% <span className="info-icon">ℹ️
                                     <span className="tooltip-text"> Choose the minimum confidence for the association rules </span>
-                                </span>
-                                <label>Minimum confidence: {minConfs.column1}%</label>
+                                </span></label>
                                 <Slider
                                     range
-                                    min={1}
+                                    min={0}
                                     max={100}
                                     value={minConfs.column1}
                                     onChange={(value) => handleMinConfChange(value, 1)}
                                 />
-                            </div> : null}</div>
+                            </div> : null}
+                        </div>
                     </div>
                     <button className="execute-button" onClick={() => executeScript(1)} disabled={isLoadingLeft}>
                         Execute Algorithm
@@ -812,10 +838,19 @@ const ScriptExecutor = () => {
                     </div>
                     {/* Slider for Column 2 */}
                     <div className="slider-container">
-                        <span className="info-icon">ℹ️
+                        <label>Semesters:    Min: {semesterToTerm(semesters.column2[0])} | Max: {semesterToTerm(semesters.column2[1])}<span className="info-icon">ℹ️
+                            <span className="tooltip-text">{infoSemesters}</span>
+                        </span></label>
+                        <Slider
+                            range
+                            min={60}
+                            max={105}
+                            value={semesters.column2}
+                            onChange={(values) => handleSemesterChange(values, 2)}
+                        />
+                        <label>Students mean grades:    Min: {rangeValues.column2[0]} | Max: {rangeValues.column2[1]} <span className="info-icon">ℹ️
                             <span className="tooltip-text">{infoMinMax}</span>
-                        </span>
-                        <label>Min: {rangeValues.column2[0]} | Max: {rangeValues.column2[1]}</label>
+                        </span> </label>
                         <Slider
                             range
                             min={1}
@@ -827,10 +862,10 @@ const ScriptExecutor = () => {
                     {/* Checkbox and Slider for min_sup/min_conf  */}
                     <div>
                         <div className="slider-container">
-                            <span className="info-icon">ℹ️
+
+                            <label>Minimum support: {minSups.column2}% <span className="info-icon">ℹ️
                                 <span className="tooltip-text"> Choose the minimum support for the frequent itemsets </span>
-                            </span>
-                            <label>Minimum support: {minSups.column2}%</label>
+                            </span> </label>
                             <Slider
                                 range
                                 min={1}
@@ -839,10 +874,10 @@ const ScriptExecutor = () => {
                                 onChange={(value) => handleMinSupChange(value, 2)}
                             />
                             {selectedValues.at(-1) === 'Association Rules' ? <div>
-                                <span className="info-icon">ℹ️
+
+                                <label>Minimum confidence: {minConfs.column2}% <span className="info-icon">ℹ️
                                     <span className="tooltip-text"> Choose the minimum confidence for the association rules </span>
-                                </span>
-                                <label>Minimum confidence: {minConfs.column2}%</label>
+                                </span> </label>
                                 <Slider
                                     range
                                     min={0}
@@ -850,7 +885,8 @@ const ScriptExecutor = () => {
                                     value={minConfs.column2}
                                     onChange={(value) => handleMinConfChange(value, 2)}
                                 />
-                            </div> : null}</div>
+                            </div> : null}
+                        </div>
                     </div>
                     <button className="execute-button" onClick={() => executeScript(2)} disabled={isLoadingRight}>
                         Execute Algorithm
@@ -881,9 +917,15 @@ const ScriptExecutor = () => {
                 <><hr />
                     <h3>Compare Outputs</h3>
                     <div className="compare-output">
-                        <pre style={{ width: '20%' }}><h4>Only in left column</h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{/*diffOutputLeft*/}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} setData={setDiffLeftData} basisForSupport={basisForSupportLeft} /></div> : <></>}</pre>
-                        <pre style={{ width: '60%' }}><h4>In both columns</h4>{diffOutputMiddle ? <div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} setData={setDiffData} basisForSupportLeft={basisForSupportLeft} basisForSupportRight={basisForSupportRight} /></div> : <></>}</pre>
-                        <pre style={{ width: '20%' }}><h4>Only in right column</h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} setData={setDiffRightData} basisForSupport={basisForSupportRight} /></div> : <></>}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in left column <span className="info-icon">ℹ️
+                            <span className="tooltip-text"> This graph shows itemsets and their support. You can hover over the itemsets and get information about them. </span>
+                        </span></h4>{diffOutputLeft && diffOutputLeft.length > 0 ? <div className='compare-container'>{/*diffOutputLeft*/}<BarChartWithTransitions data={diffLeftData} sizeOfData={sizeOfDiffLeftData} setData={setDiffLeftData} basisForSupport={basisForSupportLeft} /></div> : <></>}</pre>
+                        <pre style={{ width: '60%' }}><h4>In both columns<span className="info-icon">ℹ️
+                            <span className="tooltip-text"> This graph shows itemsets, rules or patterns that exist in both the output on the left cohort AND the right cohort. Blue bars show the difference in support between the cohorts. Hover over the bars to find out information on the itemsets.</span>
+                        </span></h4>{diffOutputMiddle ? <div className="compare-container"><DiffChart data={diffData} sizeOfData={sizeOfDiffData} setData={setDiffData} basisForSupportLeft={basisForSupportLeft} basisForSupportRight={basisForSupportRight} /></div> : <></>}</pre>
+                        <pre style={{ width: '20%' }}><h4>Only in right column <span className="info-icon">ℹ️
+                            <span className="tooltip-text"> This graph shows itemsets and their support. You can hover over the itemsets and get information about them. </span>
+                        </span></h4>{diffOutputRight && diffOutputRight.length > 0 ? <div className='compare-container'>{/*diffOutputRight*/}<BarChartWithTransitions data={diffRightData} sizeOfData={sizeOfDiffRightData} setData={setDiffRightData} basisForSupport={basisForSupportRight} /></div> : <></>}</pre>
                     </div></>
             ) : lastExecuted1 === lastExecuted2 && lastExecuted1 != -1 ? <button className="compare-button" onClick={compareOutputs}>Show the difference between columns</button> : <></>
             }

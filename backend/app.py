@@ -26,6 +26,8 @@ def execute_script():
     bins_bool = data.get("binsBoolean")
     bins_arr = data.get("binsArray")
     only_mandatory_boolean = data.get("onlyMandatoryBoolean")
+    semester_min = data.get("semesterMin")
+    semester_max = data.get("semesterMax")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -43,6 +45,8 @@ def execute_script():
         "BINS_BOOL": str(bins_bool),
         "BINS_ARRAY": str(bins_arr),
         "ONLY_MANDATORY_BOOLEAN": str(only_mandatory_boolean),
+        "SEMESTER_MIN": str(semester_min),
+        "SEMESTER_MAX": str(semester_max),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")

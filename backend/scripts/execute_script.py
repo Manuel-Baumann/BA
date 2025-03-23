@@ -71,6 +71,8 @@ def execute_script_func(
     fe_bins_bool,
     fe_bins_array,
     fe_only_mandatory_boolean,
+    fe_semester_min,
+    fe_semester_max,
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -143,10 +145,10 @@ def execute_script_func(
 
     # renaming()
 
-    if global_min_sup < 0.04:
-        print("Min sup too low! The algorithm would run for a long time.")
-        print("WARNING:Min sup too low!")
-        return
+    # if global_min_sup < 0.04:
+    #    print("Min sup too low! The algorithm would run for a long time.")
+    #    print("WARNING:Min sup too low!")
+    #    return
 
     ######################  Process input csv file  ############################
     work = preprocess_csv(
@@ -162,11 +164,12 @@ def execute_script_func(
         fe_checkbox_data,
         fe_bins_array,
         ONLY_MANDATORY_BOOLEAN,
+        fe_semester_min,
+        fe_semester_max,
     )
     if work is None or work.empty or work.shape[0] == 0:
         print("WARNING: Empty dataset!")
         return
-
     str_course_grade = "course"
     if not fe_bool_courses:
         str_course_grade = "grade"

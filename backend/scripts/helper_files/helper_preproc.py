@@ -22,6 +22,8 @@ def preprocess_csv(
     fe_checkbox_data,
     fe_bins_array,
     fe_only_mandatory_boolean,
+    fe_semester_min,
+    fe_semester_max,
 ):
     work = pd.read_csv(csv)
 
@@ -40,7 +42,7 @@ def preprocess_csv(
     # Only students who passed all courses at RWTH
     if not fe_bool_all_students:
         in_between_step = work[
-            (work["grade"] <= 4.0) & (work["course"] in mandatory_courses_arr)
+            (work["grade"] <= 4.0) & (work["course"].isin(mandatory_courses_arr))
         ]
         courses_count = in_between_step["subjectId"].value_counts()
         students_with_high_counts = courses_count[courses_count >= 18].index
@@ -65,6 +67,13 @@ def preprocess_csv(
         return
     work = work[work["subjectId"].isin(remaining_subjects)]
 
+    # Filter for semester range
+    work = work[
+        (work["semester"] >= int(fe_semester_min))
+        & (work["semester"] <= int(fe_semester_max))
+    ]
+    print("Semester range:", fe_semester_min, "to", fe_semester_max)
+
     # Add prefix (not passed) to all courses that have not been passed
     if work.shape[0] > 0:
         work["course"] = work.apply(rename_course, axis=1)
@@ -82,8 +91,6 @@ def preprocess_csv(
         < mean_scores["mean_score"].quantile(fe_slider_max / 100)
     ]
 
-    print("Unique students in dataset:", mean_range["subjectId"].nunique())
-
     if fe_bool_year:
         work["semester"] = work["semester"].apply(rename_semester_to_year)
 
@@ -92,6 +99,8 @@ def preprocess_csv(
 
     if not fe_bool_passed_courses:
         work = work[work["state"] != "Bestanden"]
+
+    print("Unique students in used dataset:", mean_range["subjectId"].nunique())
 
     print("Number of courses:", work.shape[0])
     if mean_range["subjectId"].nunique() > 0:
