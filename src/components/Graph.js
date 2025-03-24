@@ -370,8 +370,8 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
                     const [mouseX, mouseY] = d3.pointer(event); // Get mouse position
                     // Position the tooltip at the mouse's location
                     d3.select(tooltipRef.current)
-                        .style("left", `${mouseX + 95}px`) // Add offset to avoid it being directly under the cursor
-                        .style("top", `${mouseY + 110}px`); // Add offset
+                        .style("left", `${mouseX + 75}px`) // Add offset to avoid it being directly under the cursor
+                        .style("top", `${mouseY + 90}px`); // Add offset
                 })
             })
             .on("mouseout", (event) => {
@@ -396,8 +396,13 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
             newData = [...sortedData].sort((a, b) => a.label.localeCompare(b.label));
         } else if (type === "length") {
             newData = [...sortedData].sort((a, b) => {
-                const countA = (a.label.match(/&/g) || []).length;
-                const countB = (b.label.match(/&/g) || []).length;
+                const countA = (a.label.match(/=>/g) || []).length;
+                const countB = (b.label.match(/=>/g) || []).length;
+                if (countA === 0 && countB === 0) {
+                    const countX = (a.label.match(/&/g) || []).length
+                    const countY = (b.label.match(/&/g) || []).length
+                    return countX - countY || b.value - a.value
+                }
                 return countA - countB || b.value - a.value; // First by & count, then by value
             });
         } else if (type === "support") {
@@ -414,7 +419,7 @@ export const BarChartWithTransitions = ({ data, sizeOfData, setData, basisForSup
                 <button className="sort-button" onClick={() => sortData("support")}>Sort by Support</button>
                 {data[0] && data[0].confidence ? <button className="sort-button" onClick={() => sortData("confidence")}>Sort by Confidence</button> : <></>}
                 <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
-                <button className="sort-button" onClick={() => sortData("length")}>Sort by Itemset-Size</button>
+                <button className="sort-button" onClick={() => sortData("length")}>Sort by Length</button>
             </div>
             <div ref={svgContainerRef} style={{ width: "100%", height: "100%" }}>
                 <svg ref={svgRef}>
@@ -623,7 +628,7 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
         // Add event listeners for interactivity
         barGroups.select(".bar-left")
             .on("mouseover", (event, d) => {
-                let html = `<strong>Left Support:</strong> ${parseFloat(d.leftValue).toFixed(4)}<br/>`
+                let html = `<strong>Name:</strong> ${d.label}<br/><strong>Left Support:</strong> ${parseFloat(d.leftValue).toFixed(4)}<br/>`
                 if (d.leftConfidence) html = html + `<strong>Left Confidence:</strong> ${parseFloat(d.leftConfidence).toFixed(4)}`
                 d3.select(event.currentTarget).style("fill", "#ffa726");
                 d3.select(tooltipRef.current)
@@ -643,7 +648,7 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
 
         barGroups.select(".bar-right")
             .on("mouseover", (event, d) => {
-                let html = `<strong>Right Support:</strong> ${parseFloat(d.rightValue).toFixed(4)}<br/>`
+                let html = `<strong>Name:</strong> ${d.label}<br/><strong>Right Support:</strong> ${parseFloat(d.rightValue).toFixed(4)}<br/>`
                 if (d.rightConfidence) html = html + `<strong>Right Confidence:</strong> ${parseFloat(d.rightConfidence).toFixed(4)}`
                 d3.select(event.currentTarget).style("fill", "#4caf50");
                 d3.select(tooltipRef.current)
@@ -666,7 +671,7 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
                 d3.select(event.currentTarget).style("fill", "#FCE205");
                 d3.select(tooltipRef.current)
                     .style("opacity", 1)
-                    .html(`Difference between values: ${parseFloat(Math.abs(d.rightValue - d.leftValue)).toFixed(4)}`);
+                    .html(`<strong>Name:</strong> ${d.label}<br/>Difference between values: ${parseFloat(Math.abs(d.rightValue - d.leftValue)).toFixed(4)}`);
             })
             .on("mousemove", (event) => {
                 const [mouseX, mouseY] = d3.pointer(event);
@@ -688,9 +693,15 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
             newData = [...sortedData].sort((a, b) => a.label.localeCompare(b.label));
         } else if (type === "size") {
             newData = [...sortedData].sort((a, b) => {
-                const countA = (a.label.match(/&/g) || []).length;
-                const countB = (b.label.match(/&/g) || []).length;
+                const countA = (a.label.match(/=>/g) || []).length;
+                const countB = (b.label.match(/=>/g) || []).length;
                 return countA - countB || b.leftValue - a.leftValue; // First by & count, then by value
+            });
+        } else if (type === "sizethendiff") {
+            newData = [...sortedData].sort((a, b) => {
+                const countA = (a.label.match(/=>/g) || []).length;
+                const countB = (b.label.match(/=>/g) || []).length;
+                return countA - countB || Math.abs(b.leftValue - b.rightValue) - Math.abs(a.leftValue - a.rightValue)
             });
         } else if (type === "support") {
             newData = [...sortedData].sort((a, b) => Math.abs(b.leftValue - b.rightValue) - Math.abs(a.leftValue - a.rightValue));
@@ -711,7 +722,8 @@ export const DiffChart = ({ data, sizeOfData, setData, basisForSupportLeft, basi
             <div style={{ marginBottom: "10px" }}>
                 <button className="sort-button" onClick={() => sortData("support")}>Sort by Difference in Support</button>
                 <button className="sort-button" onClick={() => sortData("alphabetical")}>Sort Alphabetically</button>
-                <button className="sort-button" onClick={() => sortData("size")}>Sort by Itemset-Size</button>
+                <button className="sort-button" onClick={() => sortData("size")}>Sort by Length</button>
+                <button className="sort-button" onClick={() => sortData("sizethendiff")}>S. by Length, then diff in supp</button>
                 <button className="sort-button" onClick={() => sortData("leftsupport")}>Sort by Left Support</button>
                 <button className="sort-button" onClick={() => sortData("rightsupport")}>Sort by Right Support</button>
                 {data[0] && data[0].rightConfidence ? <><button className="sort-button" onClick={() => sortData("lconfidence")}>Sort by Left Confidence</button>

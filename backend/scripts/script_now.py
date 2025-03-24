@@ -1,14 +1,16 @@
-"""import pandas as pd
+"""
+
+import pandas as pd
 from collections import Counter
 
 # Read CSV file
 df = pd.read_csv("../csv/edu-format.csv")
 
 # Count occurrences of unique courses
-course_counts = Counter(df["term"])  # Assuming 'course' column exists
+course_counts = Counter(df["eventDate"])  # Assuming 'course' column exists
 
 # Sort courses by occurrence count (descending)
-sorted_courses = sorted(course_counts.items(), key=lambda x: x[1], reverse=True)
+sorted_courses = sorted(course_counts.items(), key=lambda x: x[0], reverse=True)
 
 # Write results to a text file
 output_file = "course_counts.txt"
@@ -17,16 +19,17 @@ with open(output_file, "w", encoding="utf-8") as f:
         f.write(f"{course}: {count}\n")
 
 print(f"Course counts written to {output_file}")
+
+
 """
 
-# """
 import pandas as pd
 
 # Read the CSV file
 df = pd.read_csv("../csv/edu-format.csv")
 
 # Define the two columns to find unique combinations
-col1 = "semester"
+col1 = "eventDate"
 col2 = "term"
 
 

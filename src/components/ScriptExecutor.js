@@ -774,7 +774,7 @@ const ScriptExecutor = () => {
                                 </span></label>
                                 <Slider
                                     range
-                                    min={0}
+                                    min={1}
                                     max={100}
                                     value={minConfs.column1}
                                     onChange={(value) => handleMinConfChange(value, 1)}
@@ -862,7 +862,7 @@ const ScriptExecutor = () => {
                         </span> </label>
                         <Slider
                             range
-                            min={1}
+                            min={0}
                             max={100}
                             value={rangeValues.column2}
                             onChange={(values) => handleRangeChange(values, 2)}
@@ -889,7 +889,7 @@ const ScriptExecutor = () => {
                                 </span> </label>
                                 <Slider
                                     range
-                                    min={0}
+                                    min={1}
                                     max={100}
                                     value={minConfs.column2}
                                     onChange={(value) => handleMinConfChange(value, 2)}
