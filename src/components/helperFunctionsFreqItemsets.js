@@ -5,7 +5,7 @@
 
 export const buildFrequentItemsetHierarchy = (patterns, basisForSupportFromOutput, basisForWholeDataSet) => {
     if (!patterns || patterns.length === 0) {
-        return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"]);
+        return buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"], basisForSupportFromOutput, basisForWholeDataSet);
     }
     let basis = patterns.map((item) => {
         const [itemsets, support] = item.split("#SUP:")

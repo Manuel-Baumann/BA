@@ -2,14 +2,13 @@ from spmf import Spmf  # type: ignore
 import pandas as pd  # type: ignore
 from mlxtend.frequent_patterns import fpmax  # type: ignore
 from mlxtend.frequent_patterns import apriori  # type: ignore
-from .definitions import tmp, tmp2, tmp4, MAX_VALUE_OF_SUBJECT_ID
+from .definitions import tmp, tmp2, tmp4, MAX_VALUE_OF_SUBJECT_ID, mandatory_courses_arr
 
 
 def execute_freq_itemset_algorithm(
     work,
     normal_closed_maximal,
     bool_courses,
-    mandatory_courses_arr,
     min_sup,
     bool_matr,
     df_to_file_function,
@@ -60,6 +59,7 @@ def execute_freq_itemset_algorithm(
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: "0.0" in str(x))
             ]
+
         if frequent_itemset.shape[0] == 0:
             print("WARNING: No frequent itemsets with given minimum support found.")
             return
@@ -80,14 +80,7 @@ def execute_freq_itemset_algorithm(
             ]
         frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
         frequent_itemset = frequent_itemset.sort_values(by="support", ascending=False)
-        # if bool_courses:
-        #    if frequent_itemset.shape[0] > 0:
-        #       frequent_itemset = frequent_itemset[
-        #          ~frequent_itemset["itemsets"].apply(
-        #             lambda x: not x.isdisjoint(mandatory_courses_arr)
-        #        )
-        #   ]
-        #  frequent_itemset["itemsets"] = frequent_itemset["itemsets"].apply(list)
+
         if not bool_courses:
             frequent_itemset = frequent_itemset[
                 ~frequent_itemset["itemsets"].apply(lambda x: 0.0 in x)

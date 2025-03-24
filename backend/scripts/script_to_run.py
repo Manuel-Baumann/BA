@@ -35,6 +35,7 @@ try:
     only_mandatory_boolean = os.getenv("ONLY_MANDATORY_BOOLEAN")
     semester_min = os.getenv("SEMESTER_MIN", "")
     semester_max = os.getenv("SEMESTER_MAX", "")
+    bool_filter_fi_results = os.getenv("BOOL_FILTER_FI_RESULTS")
 
     # Example usage of the values
 
@@ -94,6 +95,7 @@ try:
         only_mandatory_boolean,
         semester_min,
         semester_max,
+        bool_filter_fi_results,
     )
 
 except Exception as e:

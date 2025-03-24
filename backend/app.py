@@ -28,6 +28,7 @@ def execute_script():
     only_mandatory_boolean = data.get("onlyMandatoryBoolean")
     semester_min = data.get("semesterMin")
     semester_max = data.get("semesterMax")
+    filter_fi_results = data.get("filterFIResults")
 
     # Pass the values as environment variables to the script
     env_vars = {
@@ -47,6 +48,7 @@ def execute_script():
         "ONLY_MANDATORY_BOOLEAN": str(only_mandatory_boolean),
         "SEMESTER_MIN": str(semester_min),
         "SEMESTER_MAX": str(semester_max),
+        "BOOL_FILTER_FI_RESULTS": str(filter_fi_results),
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")

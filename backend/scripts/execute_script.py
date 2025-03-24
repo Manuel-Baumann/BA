@@ -73,6 +73,7 @@ def execute_script_func(
     fe_only_mandatory_boolean,
     fe_semester_min,
     fe_semester_max,
+    fe_bool_filter_fi_results_only_optional,
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -80,7 +81,6 @@ def execute_script_func(
             "Error: Check slider values, min:", fe_slider_min, ">= max:", fe_slider_max
         )
         return
-
     #################### Handle global vars based on input ####################
     global TRUNCATE_OUTPUT
     TRUNCATE_OUTPUT = fe_number_of_output_lines
@@ -109,6 +109,11 @@ def execute_script_func(
     global global_min_sup
     global global_min_conf
     global bool_use_params_FE
+    global REMOVE_ALL_MAND_COURSES_FI
+    if fe_bool_filter_fi_results_only_optional == "False":
+        REMOVE_ALL_MAND_COURSES_FI = False
+    else:
+        REMOVE_ALL_MAND_COURSES_FI = True
     if fe_bool_use_params == "False":
         fe_bool_use_params = False
     else:
@@ -204,7 +209,6 @@ def execute_script_func(
             work,
             fe_normal_closed_maximal,
             fe_bool_courses,
-            mandatory_courses_arr,
             global_min_sup,
             bool_matr,
             df_to_file,
@@ -228,7 +232,7 @@ def execute_script_func(
         relative_support_divisor = create_spmf_ass_rules_input(
             work, tmp, grade_bool, all_distinct_courses, USE_S_OR_Y_AS_BASIS_FOR_FI_AR
         )
-        print("rel sup div", relative_support_divisor)
+        # print("rel sup div", relative_support_divisor)
         run_spmf_association_rules(
             algo_name, tmp, tmp2, global_min_sup, global_min_conf
         )

@@ -149,6 +149,7 @@ const ScriptExecutor = () => {
         }, {}),
     });
     const [studentsBasis, setStudentsBasis] = useState(false)
+    const [filterFIOnlyOptional, setFilterFIOnlyOptional] = useState(false)
     const [binsBool, setBinsBool] = useState(false)
     const [binsArr, setBinsArr] = useState(['1.7', '2.7', '3.7', '4.0', '5.0'])
     const [currentBin, setCurrentBin] = useState('1.0')
@@ -169,6 +170,7 @@ const ScriptExecutor = () => {
     const [isLoadingLeft, setIsLoadingLeft] = useState(false)
     const [isLoadingRight, setIsLoadingRight] = useState(false)
 
+    // Execute Button was pressed
     const executeScript = async (columnIndex) => {
         const values = selectedValues
         const columnValues = columnIndex === 1 ? selectedColumnValues.column1 : selectedColumnValues.column2;
@@ -202,7 +204,8 @@ const ScriptExecutor = () => {
                 binsArray: binsArr,
                 onlyMandatoryBoolean: onlyMandatoryBool,
                 semesterMin: semesterRange[0],
-                semesterMax: semesterRange[1]
+                semesterMax: semesterRange[1],
+                filterFIResults: filterFIOnlyOptional
             });
         } catch (error) {
             const errorMessage = `Error while executing script: ${error.message}`
@@ -316,24 +319,28 @@ const ScriptExecutor = () => {
         } catch (error) {
             const errorMessage = `Error while visualizing data: ${error.message}`
             let responseLines = response.data.output.split('\n')
+            let warningLine = ''
 
             for (let i = 0; i < responseLines.length; i++) {
                 if (responseLines[i].startsWith('WARNING')) {
+                    warningLine = responseLines[i]
                     responseLines = responseLines.slice(0, i)
                     break
                 }
             }
             if (columnIndex === 1) {
-                setPreOutput1(responseLines.join("\n"))
+                setPreOutput1(responseLines.join("\n") + '\n\n' + warningLine.replace('WARNING', 'Result'))
                 setOutput1(errorMessage);
-                sizeOfData1 = 0
-                setData1(buildIcicleHierarchySeqPats([]))
+                const icicleData = buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"], 1, 1)
+                sizeOfData1 = icicleData.length
+                setData1(icicleData)
                 setPostProcOutput1('');
             } else {
-                setPreOutput2(responseLines.join("\n"))
+                setPreOutput2(responseLines.join("\n") + '\n\n' + warningLine.replace('WARNING', 'Result'))
                 setOutput2(errorMessage);
-                sizeOfData2 = 0
-                setData2(buildIcicleHierarchySeqPats([]))
+                const icicleData = buildFrequentItemsetHierarchy(["Empty dataset #SUP:1"], 1, 1)
+                sizeOfData2 = icicleData.length
+                setData2(icicleData)
                 setPostProcOutput2('');
             }
         }
@@ -505,6 +512,9 @@ const ScriptExecutor = () => {
     const handleSetStudentsBasisChange = () => {
         setStudentsBasis((prev) => !prev);
     };
+    const handleFilterFIResultsChange = () => {
+        setFilterFIOnlyOptional((prev) => !prev)
+    }
     const handleBinsBoolChange = () => {
         setBinsBool((prev) => !prev);
     };
@@ -610,6 +620,19 @@ const ScriptExecutor = () => {
                                 </label>
                             </div>
                         </div> : null}
+                        {selectedValues.at(-1) === 'Frequent Itemsets' && group.groupName === 'Analysis method' && selectedValues.at(1) === 'Courses' && selectedValues.at(-2) == 'Normal' ? <div className="checkbox-container">
+                            <div key="FI filter only optional">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="FI filter only optional"
+                                        checked={filterFIOnlyOptional}
+                                        onChange={handleFilterFIResultsChange}
+                                    />
+                                    Filter results: Only non-mandatory
+                                </label>
+                            </div>
+                        </div> : null}
                         {group.groupName === 'Type of academic data' ? <div key="OnlyMandatoryBool">
                             <label><input type="checkbox" name="Categorise: Mandatory / Optional" checked={onlyMandatoryBool} onChange={handleOnlyMandatoryBoolChange} />Categorise: Mandatory / Optional</label>
                         </div>
@@ -629,7 +652,6 @@ const ScriptExecutor = () => {
                                     </span>
                                 </label>
                                 {binsBool ? <>
-
                                     <GradeLine addBinHandler={addBinHandler} handleDeleteBin={handleDeleteBin} binsArr={binsArr} setBinsArr={setBinsArr} allGrades={allGrades} setCurrentBin={setCurrentBin} currentBin={currentBin} />
                                     <table className="bins-table">
                                         <tbody>
@@ -642,22 +664,9 @@ const ScriptExecutor = () => {
                                                     <tr key={(index + 1) * 4}>
                                                         <th><input type="text" id={`row-${index}`} key={`row-${index}`} maxLength={8} size="10" placeholder={index + 1} /></th>
                                                         <th><label key={(index + 1) * 2}> {getBinOfItem(item, index)} </label></th>
-                                                        {/* <th>{index !== binsArr.length - 1 ? <button key={index} onClick={() => handleDeleteBin(index)}>Delete bin</button> : null}</th> */}
                                                     </tr>)
                                             }</tbody>
                                     </table>
-                                    {/*
-                                    <div className="below-div"><Slider
-                                        range
-                                        min={0}
-                                        max={Object.keys(remainingGradesObj).length - 1}
-                                        marks={remainingGradesObj}
-                                        value={Object.keys(remainingGradesObj).find(key => remainingGradesObj[key] === currentBin)}
-                                        onChange={(value) => setCurrentBin(remainingGradesObj[value])}
-                                    /></div>
-                                    {Object.values(remainingGradesObj).length > 0 ? <div className="below-div">
-                                        <button className="execute-button" onClick={() => addBinHandler()}>Add bin</button></div> : null}
-                                         */}
                                 </> : null}
                             </div>
                         </div> : null}
