@@ -261,7 +261,7 @@ def execute_closed_freq_itemset_algorithm(
         input_filename=input_file,
         output_filename=tmp4,
         arguments=[min_sup],
-        spmf_bin_location_dir="../../Data/spmf/",
+        spmf_bin_location_dir="C:/Users/lenaf/Documents/Uni/BA/BA/Data/spmf",
     )
     spmf.run()
 

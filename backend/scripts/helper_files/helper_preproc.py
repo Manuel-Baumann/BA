@@ -17,7 +17,7 @@ def preprocess_csv(
     fe_slider_min,
     fe_slider_max,
     fe_bool_year,
-    fe_bool_passed_courses,
+    fe_exams_all_passed_failed,
     fe_column_values,
     fe_checkbox_data,
     fe_bins_array,
@@ -28,16 +28,16 @@ def preprocess_csv(
     work = pd.read_csv(csv)
 
     # Filter for column values
-    if fe_column_values[0] != "All":
-        work = work[work["gender"] == fe_column_values[0]]
-    if fe_column_values[1] != "All":
-        work = work[work["nationality"] == float(fe_column_values[1].split()[0])]
     if fe_column_values[2] != "All":
-        work = work[work["universityId"] == float(fe_column_values[2].split()[0])]
+        work = work[work["gender"] == fe_column_values[2]]
     if fe_column_values[3] != "All":
-        work = work[work["degree"] == fe_column_values[3]]
+        work = work[work["nationality"] == float(fe_column_values[3].split()[0])]
     if fe_column_values[4] != "All":
-        work = work[work["subject"] == fe_column_values[4]]
+        work = work[work["universityId"] == float(fe_column_values[4].split()[0])]
+    if fe_column_values[5] != "All":
+        work = work[work["degree"] == fe_column_values[5]]
+    if fe_column_values[6] != "All":
+        work = work[work["subject"] == fe_column_values[6]]
 
     # Only students who passed all courses at RWTH
     if not fe_bool_all_students:
@@ -97,7 +97,9 @@ def preprocess_csv(
     # Filter for mean grade range
     work = pd.DataFrame((work[work["subjectId"].isin(mean_range["subjectId"])]))
 
-    if not fe_bool_passed_courses:
+    if fe_exams_all_passed_failed == 1:
+        work = work[work["state"] == "Bestanden"]
+    elif fe_exams_all_passed_failed == 2:
         work = work[work["state"] != "Bestanden"]
 
     print("Unique students in used dataset:", mean_range["subjectId"].nunique())

@@ -1,3 +1,5 @@
+from helper_files.definitions import mandatory_courses_arr
+
 def make_support_relative(tmp, number_of_rules):
     with open(tmp, "r") as file:
         lines = file.readlines()
@@ -51,7 +53,7 @@ def print_output(tmp, truncate_output):
                 break
 
 
-def filter_only_mandatory_courses(tmp2, output, mandatory_courses_arr):
+def filter_only_mandatory_courses(tmp2, output):
     with open(tmp2, "r", newline="", encoding="utf-8") as f:
         with open(output, "w", newline="", encoding="utf-8") as g:
             for line in f:
@@ -62,6 +64,6 @@ def filter_only_mandatory_courses(tmp2, output, mandatory_courses_arr):
                         if not bool_all_mandatory:
                             g.write(line)
                         break
-                    if words[i] not in mandatory_courses_arr:
+                    if words[i] not in mandatory_courses_arr and words[i] != "==>":
                         bool_all_mandatory = False
                 g.write("\n")

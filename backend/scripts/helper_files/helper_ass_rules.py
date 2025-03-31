@@ -89,7 +89,7 @@ def run_spmf_association_rules(algo_name, input, output, minsup, minconf):
         input_filename=input,
         output_filename=output,
         arguments=[minsup, minconf],
-        spmf_bin_location_dir="../../Data/spmf/",
+        spmf_bin_location_dir=r"C:\Users\lenaf\Documents\Uni\BA\BA\Data\spmf",
     )
     spmf.run()
 

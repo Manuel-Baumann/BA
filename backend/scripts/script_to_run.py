@@ -36,6 +36,7 @@ try:
     semester_min = os.getenv("SEMESTER_MIN", "")
     semester_max = os.getenv("SEMESTER_MAX", "")
     bool_filter_fi_results = os.getenv("BOOL_FILTER_FI_RESULTS")
+    bool_filter_ar_results = os.getenv("BOOL_FILTER_AR_RESULTS")
 
     # Example usage of the values
 
@@ -43,30 +44,32 @@ try:
     # Functions
     #
     # Execute script based on chosen dropdown values
-    bool_all, bool_courses, bool_year, bool_all_courses = (
-        True,
+    bool_all, bool_courses, bool_year = (
         True,
         True,
         True,
     )
     normal_closed_maximal = 0
     sets_rules_patterns = 0
+    exams_all_passed_failed = 0
 
-    if values[0] == "Only students who graduated at RWTH":
+    if column_values[0] == "Only students who graduated at RWTH":
         bool_all = False
-    if values[1] == "Grades":
+    if values[0] == "Grades":
         bool_courses = False
-    if values[2] == "Semester":
+    if values[1] == "Semester":
         bool_year = False
-    if values[3] == "Only not passed courses":
-        bool_all_courses = False
-    if values[4] == "Closed":
+    if column_values[1] == "Only failed exams":
+        exams_all_passed_failed = 2
+    if column_values[1] == "Only passed exams":
+        exams_all_passed_failed = 1
+    if values[2] == "Closed":
         normal_closed_maximal = 1
-    if values[4] == "Maximal":
+    if values[2] == "Maximal":
         normal_closed_maximal = 2
-    if values[-1] == "Association Rules":
+    if values[3] == "Association Rules":
         sets_rules_patterns = 1
-    if values[-1] == "Sequence Patterns":
+    if values[3] == "Sequence Patterns":
         sets_rules_patterns = 2
 
     # Create the output directory if it doesn't exist
@@ -78,7 +81,7 @@ try:
         bool_all,
         bool_courses,
         bool_year,
-        bool_all_courses,
+        exams_all_passed_failed,
         normal_closed_maximal,
         sets_rules_patterns,
         int(slider_min),
@@ -96,6 +99,7 @@ try:
         semester_min,
         semester_max,
         bool_filter_fi_results,
+        bool_filter_ar_results
     )
 
 except Exception as e:

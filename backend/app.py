@@ -29,10 +29,11 @@ def execute_script():
     semester_min = data.get("semesterMin")
     semester_max = data.get("semesterMax")
     filter_fi_results = data.get("filterFIResults")
+    filter_ar_results = data.get("filterARResults")
 
     # Pass the values as environment variables to the script
     env_vars = {
-        "VALUES": ",".join(values),
+        "VALUES": ",".join(v for v in values if v is not None),
         "COLUMN_VALUES": ",".join(column_values),
         "COLUMN_INDEX": str(column),
         "SLIDER_MIN": str(slider_min),
@@ -49,6 +50,7 @@ def execute_script():
         "SEMESTER_MIN": str(semester_min),
         "SEMESTER_MAX": str(semester_max),
         "BOOL_FILTER_FI_RESULTS": str(filter_fi_results),
+        "BOOL_FILTER_AR_RESULTS": str(filter_ar_results)
     }
 
     script_path = os.path.join(os.path.dirname(__file__), "scripts", "script_to_run.py")

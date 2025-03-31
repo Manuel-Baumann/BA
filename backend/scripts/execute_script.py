@@ -50,13 +50,14 @@ algo_name = ""
 global_min_sup = 200
 global_min_conf = 200
 bool_use_params = False
+bool_filter_ar_results = False
 
 
 def execute_script_func(
     fe_bool_all_students,
     fe_bool_courses,
     fe_bool_year,
-    fe_bool_passed_courses,
+    fe_exams_all_passed_failed,
     fe_normal_closed_maximal,
     fe_sets_rules_patterns,
     fe_slider_min,
@@ -74,6 +75,7 @@ def execute_script_func(
     fe_semester_min,
     fe_semester_max,
     fe_bool_filter_fi_results_only_optional,
+    fe_bool_filter_ar_results
 ):
     print("Script started at:", datetime.datetime.now())
     if fe_slider_min >= fe_slider_max:
@@ -110,6 +112,9 @@ def execute_script_func(
     global global_min_conf
     global bool_use_params_FE
     global REMOVE_ALL_MAND_COURSES_FI
+    global bool_filter_ar_results
+    if fe_bool_filter_ar_results == "True":
+        bool_filter_ar_results = True
     if fe_bool_filter_fi_results_only_optional == "False":
         REMOVE_ALL_MAND_COURSES_FI = False
     else:
@@ -128,7 +133,7 @@ def execute_script_func(
         global_min_sup, global_min_conf = determine_params_automatically(
             fe_sets_rules_patterns,
             fe_bool_year,
-            fe_bool_passed_courses,
+            True,
             fe_slider_min,
             fe_slider_max,
         )
@@ -143,6 +148,7 @@ def execute_script_func(
         USE_S_OR_Y_AS_BASIS_FOR_FI_AR = False
     if fe_bins_bool == "True":
         BINS_BOOL = True
+        print("Binning grades")
     else:
         BINS_BOOL = False
     if fe_only_mandatory_boolean == "True":
@@ -164,7 +170,7 @@ def execute_script_func(
         fe_slider_min,
         fe_slider_max,
         fe_bool_year,
-        fe_bool_passed_courses,
+        fe_exams_all_passed_failed,
         fe_column_values,
         fe_checkbox_data,
         fe_bins_array,
@@ -227,7 +233,7 @@ def execute_script_func(
         #    print("WARNING:Min sup too low!")
         #    return
 
-        print('"""POSTPROCESSING""" Ass Rules algo:', algo_name)
+        print('"""POSTPROCESSING""" Association Rules algo:', algo_name)
 
         relative_support_divisor = create_spmf_ass_rules_input(
             work, tmp, grade_bool, all_distinct_courses, USE_S_OR_Y_AS_BASIS_FOR_FI_AR
@@ -240,17 +246,19 @@ def execute_script_func(
         final_file = ""
         if not grade_bool:
             # Filter out rules with only mandatory courses
-            print(
-                '"""POSTPROCESSING"""Rules that include only mandatory courses were filtered out.'
-            )
-            filter_only_mandatory_courses(tmp, tmp2, mandatory_courses_arr)
-            final_file = tmp2
+            if bool_filter_ar_results:
+                print('"""POSTPROCESSING"""Rules that include only mandatory courses were filtered out.')
+                filter_only_mandatory_courses(tmp, tmp2)
+                final_file = tmp2
+            else:
+                final_file = tmp
         else:
             final_file = tmp
         sort_spmf_ass_rules(final_file)
         make_support_relative(final_file, relative_support_divisor)
-        print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
-        remove_grade_zero(final_file)
+        if grade_bool:
+            print('"""POSTPROCESSING"""Association Rules including grade 0.0 were removed.')
+            remove_grade_zero(final_file)
         print("OUTPUT: ASSOCIATION RULES")
 
         print_output(final_file, TRUNCATE_OUTPUT)

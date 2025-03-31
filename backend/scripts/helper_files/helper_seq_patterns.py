@@ -55,7 +55,7 @@ def run_spmf_seq_pat_algo(input, output, min_support, max_len, algo_name):
         input_filename=input,
         output_filename=output,
         arguments=algo_args,
-        spmf_bin_location_dir="../../Data/spmf/",
+        spmf_bin_location_dir=r"C:\Users\lenaf\Documents\Uni\BA\BA\Data\spmf",
     )
     spmf.run()
     # print(spmf.to_pandas_dataframe(pickle=True))
